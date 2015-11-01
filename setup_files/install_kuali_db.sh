@@ -13,7 +13,7 @@ MYSQL_SQL_FILES_FOLDER="${CURRENT_WORKING_DIR}/kc/coeus-db/coeus-db-sql/src/main
 # FUNCTIONS
 function fix_some_sql_database_scripts {
 	sed -i -e '/---------------/d' ${MYSQL_SQL_FILES_FOLDER}/kc/bootstrap/V602_010__RESKC-204.sql
-	
+
 }
 
 function exec_sql_scripts() {
@@ -21,16 +21,13 @@ function exec_sql_scripts() {
 	git clone ${KC_PROJECT_LINK}
 	fix_some_sql_database_scripts
 	cd ${MYSQL_SQL_FILES_FOLDER}
-	INSTALL_SQL_VERSION=( $(ls -v *.sql | grep -v INSTALL_TEMPLATE | sed 's/_.*//g' | uniq ) )
+	INSTALL_SQL_VERSION=( $(ls -v *.sql | grep -v INSTALL_TEMPLATE | sed 's/_.*//g' | uniq | sort -n ) )
 	for version in ${INSTALL_SQL_VERSION[@]:${1}}
 	do
 		# INSTALL THE MYSQL FILES
 		echo "Installing/upgrading to version ${version}"
 		if [ -f ${version}_mysql_rice_server_upgrade.sql ]; then
 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_rice_server_upgrade.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_SERVER_UPGRADE.log 2>&1
-		fi
-		if [ -f ${version}_mysql_rice_client_upgrade.sql ]; then
-			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_rice_client_upgrade.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_CLIENT_UPGRADE.log 2>&1
 		fi
 		if [ -f ${version}_mysql_kc_rice_server_upgrade.sql ]; then
 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_kc_rice_server_upgrade.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_RICE_SERVER_UPGRADE.log 2>&1
@@ -84,6 +81,5 @@ function setup_kuali_database {
 	check_sql_errors
 }
 
-# Run the Kuali SQL files 
+# Run the Kuali SQL files
 setup_kuali_database
-
