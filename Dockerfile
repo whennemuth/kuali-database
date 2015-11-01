@@ -11,7 +11,7 @@
 #
 
 # Pull base image.
-FROM ubuntu:14.04.2
+FROM ubuntu:14.04
 MAINTAINER Jeffery Bagirimvano <jeffery.rukundo@gmail.com>
 
 RUN mkdir -p /setup_files
