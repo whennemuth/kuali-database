@@ -11,34 +11,37 @@
 #
 
 # Pull base image.
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 MAINTAINER Jeffery Bagirimvano <jeffery.rukundo@gmail.com>
 
 RUN mkdir -p /setup_files
-
 ADD setup_files /setup_files
 
 ENV HOST_NAME kuali_db_mysql
-ENV SHELL /bin/bash
 
 # Install MySQL.
 RUN \
   apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git && \
+  ###
   echo $(head -1 /etc/hosts | cut -f1) ${HOST_NAME} >> /etc/hosts && \
-  sed -i 's/^\(bind-address\s.*\)/# \1/' /etc/mysql/my.cnf && \
-  sed -i 's/^\(log_error\s.*\)/# \1/' /etc/mysql/my.cnf && \
   echo "mysqld_safe &" > /tmp/config && \
   echo "mysqladmin --silent --wait=30 ping || exit 1" >> /tmp/config && \
-  echo "mysql -e 'GRANT ALL PRIVILEGES ON *.* TO \"root\"@\"%\" WITH GRANT OPTION;'" >> /tmp/config && \
+  echo "mysql -e 'GRANT ALL PRIVILEGES ON *.* TO \"root\"@\"localhost\" WITH GRANT OPTION;'" >> /tmp/config && \
   bash /tmp/config && \
   rm -f /tmp/config && \
+  ### Set root password
 	mysqladmin -u root password Chang3m3t0an0th3r && \
 	mysqladmin -u root -pChang3m3t0an0th3r -h ${HOST_NAME} password Chang3m3t0an0th3r && \
-	cp -f /setup_files/my.cnf /etc/mysql/my.cnf && \
+  ###  For Kuali Coeus
+  echo "transaction-isolation   = READ-COMMITTED" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+  echo "lower_case_table_names  = 1" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+  echo "sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+  ###
 	mysql -u root -pChang3m3t0an0th3r < /setup_files/configure_mysql.sql && \
 	service mysql restart && \
-	cd setup_files; ./install_kuali_db.sh && \
+  ###
+	cd /setup_files; ./install_kuali_db.sh && \
 	rm -fr /setup_files && \
 	echo "Done!!!"
 
@@ -46,5 +49,4 @@ RUN \
 EXPOSE 3306
 
 # Define default command.
-# CMD ["mysqld"]
-CMD export TERM=vt100; /usr/bin/mysqld_safe
+CMD /usr/bin/mysqld_safe
