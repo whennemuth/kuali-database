@@ -1,0 +1,26 @@
+# To run it, do:
+#   $ docker-compose up -d
+
+version: '2'
+
+services:
+  kuali-coeus-database:
+    build:
+      context: .
+      dockerfile: Dockerfile-mysql
+    environment:
+      - "MYSQL_ROOT_PASSWORD=Chang3m3t0an0th3r"
+      - "MYSQL_DATABASE=kualicoeusdb_test"
+      - "MYSQL_USER=kcusername_test"
+      - "MYSQL_PASSWORD=kcpassword_test"
+      - "TZ=America/Chicago"
+    image:          jefferyb/kuali_db_mysql
+    container_name: kuali-coeus-database
+    hostname:       kuali-coeus-database
+    restart:        always
+    volumes:
+      - kuali-coeus-database-data:/var/lib/mysql
+
+volumes:
+  kuali-coeus-database-data:
+    driver: local
