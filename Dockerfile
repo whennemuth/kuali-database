@@ -18,7 +18,6 @@ RUN mkdir -p /setup_files
 ADD setup_files /setup_files
 
 ENV HOST_NAME kuali_database
-
 # ENV MYSQL_ROOT_PASSWORD="Chang3m3t0an0th3r"
 ENV MYSQL_ROOT_PASSWORD="password123"
 ENV MYSQL_DATABASE="kualicoeusdb"
@@ -27,7 +26,8 @@ ENV MYSQL_PASSWORD="kcpassword"
 
 # Install MySQL.
 RUN \
-  echo "The repoUrl is: " wget -O - -q http://localhost:8000/repoUrl
+  echo "The repoUrl is: " && \
+  wget -O - -q http://localhost:8000/repoUrl.txt
     # apt-get update && \
     # DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git && \
     # rm -rf /var/lib/apt/lists/* && \
