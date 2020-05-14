@@ -19,42 +19,49 @@ ADD setup_files /setup_files
 
 ENV HOST_NAME kuali_database
 
-ENV MYSQL_ROOT_PASSWORD="Chang3m3t0an0th3r"
+# ENV MYSQL_ROOT_PASSWORD="Chang3m3t0an0th3r"
+ENV MYSQL_ROOT_PASSWORD="password123"
 ENV MYSQL_DATABASE="kualicoeusdb"
 ENV MYSQL_USER="kcusername"
 ENV MYSQL_PASSWORD="kcpassword"
 
 # Install MySQL.
 RUN \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git && \
-    rm -rf /var/lib/apt/lists/* && \
-    ###
-    echo $(head -1 /etc/hosts | cut -f1) ${HOST_NAME} >> /etc/hosts && \
-    echo "mysqld_safe &" > /tmp/config && \
-    echo "mysqladmin --silent --wait=30 ping || exit 1" >> /tmp/config && \
-    echo "mysql -e 'GRANT ALL PRIVILEGES ON *.* TO \"root\"@\"localhost\" WITH GRANT OPTION;'" >> /tmp/config && \
-    bash /tmp/config && \
-    rm -f /tmp/config && \
-    ### Set root password
-    mysqladmin -u root password ${MYSQL_ROOT_PASSWORD} && \
-    mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} -h ${HOST_NAME} password ${MYSQL_ROOT_PASSWORD} && \
-    ###  For Kuali Coeus
-    sed -i 's/^\(bind-address\s.*\)/# \1/' /etc/mysql/mysql.conf.d/mysqld.cnf && \
-    echo "transaction-isolation   = READ-COMMITTED" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
-    echo "lower_case_table_names  = 1" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
-    echo "sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
-    ### Create user & database
-    mysql -u root -p${MYSQL_ROOT_PASSWORD} -e " \
-      CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE CHARACTER SET utf8 COLLATE utf8_bin; \
-      GRANT ALL ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}'; \
-      GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES, CREATE VIEW, CREATE ROUTINE, ALTER ROUTINE ON * . * TO  '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ; \
-      "; \
-    service mysql restart && \
-    ###
-    cd /setup_files; ./install_kuali_db.sh && \
-    rm -fr /setup_files && \
-    echo "Done!!!"
+  echo "The repoUrl is: " wget -O - -q http://localhost:8000/repoUrl
+    # apt-get update && \
+    # DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git && \
+    # rm -rf /var/lib/apt/lists/* && \
+    # # This does not seem to work. It puts the docker network in the hosts file, but mysql proceeds to run on localhost instead.
+    # echo $(head -1 /etc/hosts | cut -f1) ${HOST_NAME} >> /etc/hosts && \
+    # # Root is getting access denied when trying access mysql. Add skip-grant-tables and then 
+    # echo "skip-grant-tables" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+    # echo "mysqld_safe &" > /tmp/config && \
+    # echo "mysqladmin --silent --wait=30 ping || exit 1" >> /tmp/config && \
+    # echo "mysql -e 'flush privileges; GRANT ALL PRIVILEGES ON *.* TO \"root\"@\"localhost\" WITH GRANT OPTION;'" >> /tmp/config && \
+    # mkdir -p /var/run/mysqld && \
+    # chown mysql:mysql /var/run/mysqld && \
+    # bash /tmp/config && \
+    # rm -f /tmp/config && \
+    # ### Set root password ()
+    # # mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} -h ${HOST_NAME} password ${MYSQL_ROOT_PASSWORD} && \
+    # mysqladmin -u root password ${MYSQL_ROOT_PASSWORD} && \
+    # ###  For Kuali Coeus
+    # sed -i 's/^\(bind-address\s.*\)/# \1/' /etc/mysql/mysql.conf.d/mysqld.cnf && \
+    # echo "transaction-isolation   = READ-COMMITTED" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+    # echo "lower_case_table_names  = 1" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+    # echo "sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
+    # sed -i 's/skip-grant-tables//' /etc/mysql/mysql.conf.d/mysqld.cnf && \
+    # ### Create user & database
+    # mysql -u root -p${MYSQL_ROOT_PASSWORD} -e " \
+    #   CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE CHARACTER SET utf8 COLLATE utf8_bin; \
+    #   GRANT ALL ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}'; \
+    #   GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES, CREATE VIEW, CREATE ROUTINE, ALTER ROUTINE ON * . * TO  '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ; \
+    #   "; \
+    # service mysql restart && \
+    # ###
+    # cd /setup_files; ./install_kuali_db.sh && \
+    # rm -fr /setup_files && \
+    # echo "Done!!!"
 
 # Expose ports.
 EXPOSE 3306

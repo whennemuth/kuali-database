@@ -7,12 +7,20 @@ KC_DB_USERNAME="kcusername"
 KC_DB_PASSWORD="kcpassword"
 KC_DB_NAME="kualicoeusdb"
 
-KC_PROJECT_LINK="https://github.com/kuali/kc.git"
-MYSQL_SQL_FILES_FOLDER="${CURRENT_WORKING_DIR}/kc/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
+# KC_REPO_URL=${1:-"https://whennemuth:warrenspassword@github.com/bu-ist/kuali-research.git"}
+KC_REPO_URL="$1"
+[ -z "$KC_REPO_URL" ] && echo "Missing kuali github repository url!!!" && exit 1
+KC_REPO_NAME="$(echo \"$s\" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
+[ -z "$KC_REPO_URL" ] && echo "ERROR! Cannot determine repo name from \"${KC_REPO_URL}\"!!!" && exit 1
+KC_PROJECT_BRANCH=${2:-"master"}
+MYSQL_SQL_FILES_FOLDER="${CURRENT_WORKING_DIR}/${KC_REPO_NAME}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
 
 function exec_sql_scripts() {
-	echo
-	git clone ${KC_PROJECT_LINK}
+	git clone ${KC_REPO_URL}
+	cd ${CURRENT_WORKING_DIR}/${KC_REPO_NAME}
+	if [ "$KC_PROJECT_BRANCH" != "master" ] ; then
+	  git checkout $KC_PROJECT_BRANCH
+	fi
 	cd ${MYSQL_SQL_FILES_FOLDER}
 	INSTALL_SQL_VERSION=( $(ls -v *.sql | grep -v INSTALL_TEMPLATE | sed 's/_.*//g' | uniq | sort -n ) )
 	for version in ${INSTALL_SQL_VERSION[@]:${1}}
@@ -29,12 +37,12 @@ function exec_sql_scripts() {
 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_kc_upgrade.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_UPGRADE.log 2>&1
 		fi
 		# INSTALL THE DEMO FILES
-		# 		if [ -f ${version}_mysql_rice_demo.sql ]; then
-		# 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_rice_demo.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_DEMO.log 2>&1
-		# 		fi
-		# 		if [ -f ${version}_mysql_kc_demo.sql ]; then
-		# 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_kc_demo.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_DEMO.log 2>&1
-		# 		fi
+		 		if [ -f ${version}_mysql_rice_demo.sql ]; then
+		 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_rice_demo.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_DEMO.log 2>&1
+	  		fi
+		 		if [ -f ${version}_mysql_kc_demo.sql ]; then
+		 			mysql -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} ${KC_DB_NAME} < ${version}_mysql_kc_demo.sql > ${CURRENT_WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_DEMO.log 2>&1
+		 		fi
 	done
 	# THIS IS TO FIX THE "JASPER_REPORTS_ENABLED" ISSUE BECAUSE THIS SCRIPT DIDN'T RUN IN VERSION 1506
 	if [ $(mysql -N -s -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} -D ${KC_DB_NAME} -e "select VAL from KRCR_PARM_T where PARM_NM='JASPER_REPORTS_ENABLED';" | wc -l) -eq 0 ]; then
