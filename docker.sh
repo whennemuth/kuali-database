@@ -17,6 +17,7 @@ build() {
     --name=secrets-server \
     --rm \
     --volume $PWD:/files \
+    -p 8000:8000 \
     busybox httpd -f -p 8000 -h /files
 
   # Build the image.
