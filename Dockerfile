@@ -27,7 +27,7 @@ ENV MYSQL_PASSWORD="kcpassword"
 # Install MySQL.
 RUN \
   echo "The repoUrl is: " && \
-  wget -O - -q http://localhost:8000/repoUrl.txt
+  curl http://172.17.0.1:8000/repoUrl.txt
     # apt-get update && \
     # DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git && \
     # rm -rf /var/lib/apt/lists/* && \

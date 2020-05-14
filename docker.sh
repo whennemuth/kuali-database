@@ -13,14 +13,17 @@ build() {
   # Make sensitive github login url available to docker over the network.
   echo "$repoUrl" > repoUrl.txt
   docker run \
+    -d \
     --name=secrets-server \
     --rm \
-    --volume $PWD/files \
+    --volume $PWD:/files \
     busybox httpd -f -p 8000 -h /files
 
   # Build the image.
   docker-compose build
 
+  docker stop secrets-server
+  
   # Remove the sensitive github login
   rm -f repoUrl.txt
 }
