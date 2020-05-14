@@ -29,4 +29,4 @@ build() {
   rm -f repoUrl.txt
 }
 
-build
+build $@
