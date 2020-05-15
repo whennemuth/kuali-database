@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - "MYSQL_ROOT_PASSWORD=Chang3m3t0an0th3r"
+      - "MYSQL_ROOT_PASSWORD=password123"
       - "MYSQL_DATABASE=kualicoeusdb"
       - "MYSQL_USER=kcusername"
       - "MYSQL_PASSWORD=kcpassword"

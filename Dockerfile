@@ -9,6 +9,19 @@
 # To Run:
 #    docker run -d --name kuali_database -h kuali_database -p 3306:3306 jefferyb/kuali_db_mysql
 #
+# NOTE: A number of issues were encountered with the forked repo:
+# 1) The above docker run command won't work. The kuali_database host does nothing, and the CMD instruction from
+#    the Dockerfile /usr/bin/mysqld_safe leads to the mysqld process getting dropped for some unknown reason and
+#    this instruction must be overridden in the docker run command with just "mysqld":
+#       docker run -d --name kc -h 127.0.0.1 -p 3306:3306 jefferyb/kuali_db_mysql mysqld
+# 2) Due to problems with mysqld rejecting logins from users, skip-grant-tables is set in mysqld.cnf
+#    This is obviously not secure, but is ok for local development.
+# 3) Attempts made to edit the /etc/hosts file could never have worked. The hosts file is created at docker 
+#    container runtime and cannot be edited in a Dockerfile RUN instruction.
+#
+# NOTE: If you are running this container on a remote host and would like to connect mysql workbench from your
+#       laptop to it, tunnel into the host over port 3306 as in the following example:
+#          ssh -i ~/.ssh/buaws-kuali-rsa-warren -N -v -L 3306:10.57.237.89:3306 ec2-user@10.57.237.89
 
 # Pull base image.
 FROM ubuntu:16.04
@@ -17,7 +30,6 @@ MAINTAINER Jeffery Bagirimvano <jeffery.rukundo@gmail.com>
 RUN mkdir -p /setup_files
 ADD setup_files /setup_files
 
-ENV HOST_NAME kuali_database
 ENV MYSQL_ROOT_PASSWORD="password123"
 ENV MYSQL_DATABASE="kualicoeusdb"
 ENV MYSQL_USER="kcusername"
@@ -29,8 +41,6 @@ RUN \
   DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git curl && \
   echo "The repoUrl is: " && \
   rm -rf /var/lib/apt/lists/* && \
-  # # This does not seem to work. It puts the docker network in the hosts file, but mysql proceeds to run on localhost instead.
-  echo $(head -1 /etc/hosts | cut -f1) ${HOST_NAME} >> /etc/hosts && \
   # Root is getting access denied when trying access mysql. Add skip-grant-tables and then flush privileges when connected.
   echo "skip-grant-tables" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
   echo "mysqld_safe &" > /tmp/config && \
@@ -41,14 +51,13 @@ RUN \
   bash /tmp/config && \
   rm -f /tmp/config && \
   ### Set root password ()
-  # mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} -h ${HOST_NAME} password ${MYSQL_ROOT_PASSWORD} && \
   mysqladmin -u root password ${MYSQL_ROOT_PASSWORD} && \
   ###  For Kuali Coeus
   sed -i 's/^\(bind-address\s.*\)/# \1/' /etc/mysql/mysql.conf.d/mysqld.cnf && \
   echo "transaction-isolation   = READ-COMMITTED" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
   echo "lower_case_table_names  = 1" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
   echo "sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf && \
-  sed -i 's/skip-grant-tables//' /etc/mysql/mysql.conf.d/mysqld.cnf && \
+  # sed -i 's/skip-grant-tables//' /etc/mysql/mysql.conf.d/mysqld.cnf && \
   ### Create user & database
   mysql -u root -p${MYSQL_ROOT_PASSWORD} -e " \
     CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE CHARACTER SET utf8 COLLATE utf8_bin; \
@@ -57,7 +66,9 @@ RUN \
     "; \
   service mysql restart && \
   ###
-  cd /setup_files; ./install_kuali_db.sh $(curl http://172.17.0.1:8000/repoUrl.txt) && \
+  mkdir -p /var/run/mysqld 2> /dev/null && \
+  chown mysql:mysql /var/run/mysqld && \
+  cd /setup_files; ./install_kuali_db.sh "$(curl --silent http://172.17.0.1:8000/repoUrl.txt)" && \
   rm -fr /setup_files && \
   echo "Done!!!"
 

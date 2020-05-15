@@ -10,7 +10,7 @@ KC_DB_NAME="kualicoeusdb"
 # KC_REPO_URL=${1:-"https://whennemuth:warrenspassword@github.com/bu-ist/kuali-research.git"}
 KC_REPO_URL="$1"
 [ -z "$KC_REPO_URL" ] && echo "Missing kuali github repository url!!!" && exit 1
-KC_REPO_NAME="$(echo \"$s\" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
+KC_REPO_NAME="$(echo "$KC_REPO_URL" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
 [ -z "$KC_REPO_URL" ] && echo "ERROR! Cannot determine repo name from \"${KC_REPO_URL}\"!!!" && exit 1
 KC_PROJECT_BRANCH=${2:-"master"}
 MYSQL_SQL_FILES_FOLDER="${CURRENT_WORKING_DIR}/${KC_REPO_NAME}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
