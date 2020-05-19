@@ -9,12 +9,12 @@ initialize() {
 	done
 
 	# Set default values.
-	[ -z "$KC_DB_USERNAME" ] && KC_DB_USERNAME='kcusername'
-	[ -z "$KC_DB_PASSWORD" ] && KC_DB_PASSWORD='kcpassword'
-	[ -z "$KC_DB_NAME" ] && KC_DB_NAME='kualidb'
+	[ -z "$DB_USERNAME" ] && DB_USERNAME='kcusername'
+	[ -z "$DB_PASSWORD" ] && DB_PASSWORD='kcpassword'
+	[ -z "$DB_NAME" ] && DB_NAME='kualidb'
 	[ -z "$KC_PROJECT_BRANCH" ] && KC_PROJECT_BRANCH='master'
-	[ -z "$KC_DB_HOST" ] && DB_HOST='127.0.0.1'
-	[ -z "$KC_DB_PORT" ] && KC_DB_PORT='3306'
+	[ -z "$DB_HOST" ] && DB_HOST='127.0.0.1'
+	[ -z "$DB_PORT" ] && DB_PORT='3306'
 	[ -z "$WORKING_DIR" ] && WORKING_DIR=$(pwd)
 	[ -z "$INSTALL_DEMO_FILES" ] && INSTALL_DEMO_FILES="true"
 
@@ -29,11 +29,11 @@ initialize() {
 	MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_NAME}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
 
 	echo "WORKING_DIR = $WORKING_DIR"
-	echo "KC_DB_USERNAME = $KC_DB_USERNAME"
-	echo "KC_DB_PASSWORD = $KC_DB_PASSWORD"
-	echo "KC_DB_NAME = $KC_DB_NAME"
-	echo "KC_PROJECT_BRANCH = $KC_PROJECT_BRANCH"
+	echo "DB_USERNAME = $DB_USERNAME"
+	echo "DB_PASSWORD = $DB_PASSWORD"
+	echo "DB_NAME = $DB_NAME"
 	echo "WORKING_DIR = $WORKING_DIR"
+	echo "KC_PROJECT_BRANCH = $KC_PROJECT_BRANCH"
 	echo "KC_REPO_URL = $KC_REPO_URL"
 	echo "KC_REPO_NAME = $KC_REPO_NAME"
 }
@@ -55,29 +55,29 @@ function exec_sql_scripts() {
 		echo "Installing/upgrading to version ${version}"
 		if [ -f ${version}_mysql_rice_server_upgrade.sql ]; then
 			mysql \
-				--host=$KC_DB_HOST \
-				--port=$KC_DB_PORT \
-				-u${KC_DB_USERNAME} \
-				-p${KC_DB_PASSWORD} \
-				${KC_DB_NAME} \
+				--host=$DB_HOST \
+				--port=$DB_PORT \
+				-u${DB_USERNAME} \
+				-p${DB_PASSWORD} \
+				${DB_NAME} \
 				< ${version}_mysql_rice_server_upgrade.sql > \
 				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_SERVER_UPGRADE.log 2>&1
 		fi
 		if [ -f ${version}_mysql_kc_rice_server_upgrade.sql ]; then
 			mysql \
-				--host=$KC_DB_HOST \
-				--port=$KC_DB_PORT \
-			  -u${KC_DB_USERNAME} \
-				-p${KC_DB_PASSWORD} ${KC_DB_NAME} \
+				--host=$DB_HOST \
+				--port=$DB_PORT \
+			  -u${DB_USERNAME} \
+				-p${DB_PASSWORD} ${DB_NAME} \
 				< ${version}_mysql_kc_rice_server_upgrade.sql > \
 				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_RICE_SERVER_UPGRADE.log 2>&1
 		fi
 		if [ -f ${version}_mysql_kc_upgrade.sql ]; then
 			mysql \
-				--host=$KC_DB_HOST \
-				--port=$KC_DB_PORT \
-				-u${KC_DB_USERNAME} \
-				-p${KC_DB_PASSWORD} ${KC_DB_NAME} \
+				--host=$DB_HOST \
+				--port=$DB_PORT \
+				-u${DB_USERNAME} \
+				-p${DB_PASSWORD} ${DB_NAME} \
 				< ${version}_mysql_kc_upgrade.sql > \
 				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_UPGRADE.log 2>&1
 		fi
@@ -85,31 +85,31 @@ function exec_sql_scripts() {
 		if [ "${INSTALL_DEMO_FILES,,}" == "true" ] ; then
 			if [ -f ${version}_mysql_rice_demo.sql ]; then
 				mysql \
-					--host=$KC_DB_HOST \
-					--port=$KC_DB_PORT \
-					-u${KC_DB_USERNAME} \
-					-p${KC_DB_PASSWORD} ${KC_DB_NAME} \
+					--host=$DB_HOST \
+					--port=$DB_PORT \
+					-u${DB_USERNAME} \
+					-p${DB_PASSWORD} ${DB_NAME} \
 					< ${version}_mysql_rice_demo.sql > \
 					${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_DEMO.log 2>&1
 			fi
 			if [ -f ${version}_mysql_kc_demo.sql ]; then
 				mysql \
-					--host=$KC_DB_HOST \
-					--port=$KC_DB_PORT \
-					-u${KC_DB_USERNAME} \
-					-p${KC_DB_PASSWORD} ${KC_DB_NAME} \
+					--host=$DB_HOST \
+					--port=$DB_PORT \
+					-u${DB_USERNAME} \
+					-p${DB_PASSWORD} ${DB_NAME} \
 					< ${version}_mysql_kc_demo.sql > \
 					${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_DEMO.log 2>&1
 			fi
 		fi
 	done
 	# THIS IS TO FIX THE "JASPER_REPORTS_ENABLED" ISSUE BECAUSE THIS SCRIPT DIDN'T RUN IN VERSION 1506
-	if [ $(mysql -N -s -u${KC_DB_USERNAME} -p${KC_DB_PASSWORD} -D ${KC_DB_NAME} -e "select VAL from KRCR_PARM_T where PARM_NM='JASPER_REPORTS_ENABLED';" | wc -l) -eq 0 ]; then
+	if [ $(mysql -N -s -u${DB_USERNAME} -p${DB_PASSWORD} -D ${DB_NAME} -e "select VAL from KRCR_PARM_T where PARM_NM='JASPER_REPORTS_ENABLED';" | wc -l) -eq 0 ]; then
 		mysql \
-			--host=$KC_DB_HOST \
-			--port=$KC_DB_PORT \
-			-u${KC_DB_USERNAME} \
-			-p${KC_DB_PASSWORD} ${KC_DB_NAME} \
+			--host=$DB_HOST \
+			--port=$DB_PORT \
+			-u${DB_USERNAME} \
+			-p${DB_PASSWORD} ${DB_NAME} \
 			< grm/V602_011__jasper_feature_flag.sql > \
 			${WORKING_DIR}/SQL_LOGS/V602_011__JASPER_FEATURE_FLAG.log 2>&1
 	fi

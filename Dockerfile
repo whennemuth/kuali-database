@@ -67,8 +67,11 @@ RUN \
     GRANT ALL ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}'; \
     GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES, CREATE VIEW, CREATE ROUTINE, ALTER ROUTINE ON * . * TO  '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ; \
     "; \
-  service mysql restart && \
-  ###
+  service mysql restart
+
+# Run the sql scripts
+RUN \
+  service mysql start && \
   mkdir -p /var/run/mysqld 2> /dev/null && \
   chown mysql:mysql /var/run/mysqld && \
   cd /setup_files && \

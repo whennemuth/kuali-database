@@ -67,22 +67,22 @@ done <<< "$(aws cloudformation describe-stacks \
   --output text)";
 
   # Apply default values to missing parameters.
-  [ -z "$KC_DB_NAME" ] && KC_DB_NAME="kualidb"
-  [ -z "$KC_DB_NAME" ] && KC_DB_NAME="$DBName"
-  [ -z "$KC_DB_USERNAME" ] && KC_DB_USERNAME="kcusername"
-  [ -z "$KC_DB_USERNAME" ] && KC_DB_USERNAME="$DBUsername"
-  [ -z "$KC_DB_PORT" ] && KC_DB_PORT="3306"
-  [ -z "$KC_DB_PORT" ] && KC_DB_PORT="$Port"
+  [ -z "$DB_NAME" ] && DB_NAME="kualidb"
+  [ -z "$DB_NAME" ] && DB_NAME="$DBName"
+  [ -z "$DB_USERNAME" ] && DB_USERNAME="kcusername"
+  [ -z "$DB_USERNAME" ] && DB_USERNAME="$DBUsername"
+  [ -z "$DB_PORT" ] && DB_PORT="3306"
+  [ -z "$DB_PORT" ] && DB_PORT="$Port"
   [ -z "$DB_HOST" ] && DB_HOST="$ClusterEndpoint"
   [ -z "$KC_REPO_URL" ] && KC_REPO_URL="https://github.com/bu-ist/kuali-research.git"
-  [ -z "$KC_DB_PASSWORD" ] && KC_DB_PASSWORD="s3://kuali-research-ec2-setup/rds/password1"
+  [ -z "$DB_PASSWORD" ] && DB_PASSWORD="s3://kuali-research-ec2-setup/rds/password1"
   [ -z "$KC_PROJECT_BRANCH" ] && KC_PROJECT_BRANCH="bu-master"
   [ -z "$WORKING_DIR" ] && WORKING_DIR="$(pwd)"
   [ -z "$INSTALL_DEMO_FILES" ] && INSTALL_DEMO_FILES='true'
 
   # If the password is actually an s3 url to a file, the password is in that file.
-  if [ "${KC_DB_PASSWORD:0:5}" == "s3://" ] ; then
-    KC_DB_PASSWORD="$(aws s3 cp $KC_DB_PASSWORD -)"
+  if [ "${DB_PASSWORD:0:5}" == "s3://" ] ; then
+    DB_PASSWORD="$(aws s3 cp $DB_PASSWORD -)"
   fi
 
   sh setup_files/install_kuali_db.sh

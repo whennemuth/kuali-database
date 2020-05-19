@@ -59,7 +59,7 @@ The purpose is to create a mysql database for the kuali-research application to 
      Specifies if the stack operation (create, update, or delete)
    - STACK_NAME:
      Specifies the name to give to a stack when creating it, or the name of the stack to update/delete. 
-   - PASSWORD_URL:
+   - DB_PASSWORD:
      Specifies the path of a file in S3 that contains the password you want to apply for access to the rds database.
 
    ```
@@ -71,7 +71,7 @@ The purpose is to create a mysql database for the kuali-research application to 
        S3_BUCKET="kuali-research-ec2-setup" && \
        sh rds.sh create \
          "STACK_NAME=kuali-aurora-mysql-rds" \
-         "PASSWORD_URL=s3://kuali-research-ec2-setup/rds/password1"
+         "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
      
        # The parameters shown above happen to be the defaults, so the equivalent is:
        sh rds.sh rds
@@ -79,7 +79,7 @@ The purpose is to create a mysql database for the kuali-research application to 
        # To update a stack that has already been created:
        sh rds.sh update \
          "STACK_NAME=kuali-aurora-mysql-rds" \
-         "PASSWORD_URL=s3://kuali-research-ec2-setup/rds/password1"
+         "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
    
        # And to delete the stack:
        sh rds.sh delete "STACK_NAME=kuali-aurora-mysql-rds"
@@ -90,19 +90,19 @@ The purpose is to create a mysql database for the kuali-research application to 
 
    Parameters:
 
-   - KC_DB_USERNAME:
+   - DB_USERNAME:
      The name of the kuali-research database user.
      *Required: No, default kcusername*
-   - KC_DB_PASSWORD:
+   - DB_PASSWORD:
      The password for the kuali-research database user. You can provide the raw password, or you can provide the path of a file in S3 that contains the password.
      *Required: Yes*
-   - KC_DB_NAME:
+   - DB_NAME:
      The name of the kuali-research database.
      *Required: No, default: kualidb*
-   - KC_DB_HOST:
+   - DB_HOST:
      The name of the host for the kuali-research database cluster. This would have been one of the outputs of the rds cluster stack creation.
      *Required: Yes*
-   - KC_DB_PORT:
+   - DB_PORT:
      The port to connect to the kuali-research database over.
      *Required: No, default: 3306*
    - KC_PROJECT_BRANCH:
@@ -118,12 +118,12 @@ The purpose is to create a mysql database for the kuali-research application to 
    # Create and populate the kuali-research database in the rds cluster:
    sh rds.sh populate \
      "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
-     "KC_DB_USERNAME=kcusername" \
-     "KC_DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
-     "KC_DB_NAME=kualidb" \
+     "DB_USERNAME=kcusername" \
+     "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
+     "DB_NAME=kualidb" \
      "KC_PROJECT_BRANCH=bu-master" \
      "DB_HOST=http://kuali-aurora-mysql-rds-databasecluster-j4nektrwrrd6.cluster-cnc9dm5uqxog.us-east-1.rds.amazonaws.com/" \
-     "KC_DB_PORT=3306" \
+     "DB_PORT=3306" \
      "WORKING_DIR=$(pwd)" \
      "INSTALL_DEMO_FILES='true'"
      
