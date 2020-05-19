@@ -1,6 +1,7 @@
 # Some dynamically generated files/directories
 rds-stack.sh
 SQL_LOGS/*
+repoUrl.txt
 # Some possible names for the kuali coeus git repo directory
 kuali-research/*
 kc/*

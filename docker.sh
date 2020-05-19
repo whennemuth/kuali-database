@@ -43,11 +43,6 @@ run() {
     --name kcdb \
     -h 127.0.0.1 \
     -p 3306:3306 \
-    -e "MYSQL_ROOT_PASSWORD=password123" \
-    -e "MYSQL_DATABASE=kualidb" \
-    -e "MYSQL_USER=kcusername" \
-    -e "MYSQL_PASSWORD=kcpassword" \
-    -e "TZ=America/New_York" \
     kuali_db_mysql \
     mysqld
 }

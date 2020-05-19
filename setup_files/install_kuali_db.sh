@@ -22,28 +22,42 @@ initialize() {
 	  mkdir -p ${WORKING_DIR}/SQL_LOGS
 	fi
 
-	# KC_REPO_URL=${1:-"https://whennemuth:warrenspassword@github.com/bu-ist/kuali-research.git"}
-	[ -z "$KC_REPO_URL" ] && echo "Missing kuali github repository url!!!" && exit 1
-	KC_REPO_NAME="$(echo "$KC_REPO_URL" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
-	[ -z "$KC_REPO_NAME" ] && echo "ERROR! Cannot determine repo name from \"${KC_REPO_URL}\"!!!" && exit 1
-	MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_NAME}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
+	# KC_REPO_URL can be a directory or the github address of the kuali coeus app.
+	if [ -d "$KC_REPO_URL" ] ; then
+		KC_REPO_DIR=$KC_REPO_URL
+	elif [ -z "$KC_REPO_URL" ] ; then
+		echo "Missing kuali github repository url or existing directory!!!"
+		exit 1
+	else
+		KC_REPO_DIR="$(echo "$KC_REPO_URL" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
+	fi
+	[ -z "$KC_REPO_DIR" ] && echo "ERROR! Cannot determine repo name from \"${KC_REPO_URL}\"!!!" && exit 1
+	
+	MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
 
+	printf "\nEnvironment variables: \n"
+	printf "-------------------------\n"
 	echo "WORKING_DIR = $WORKING_DIR"
 	echo "DB_USERNAME = $DB_USERNAME"
-	echo "DB_PASSWORD = $DB_PASSWORD"
+	echo "DB_PASSWORD = $(echo "$DB_PASSWORD" | sed 's/./*/g')"
 	echo "DB_NAME = $DB_NAME"
 	echo "WORKING_DIR = $WORKING_DIR"
 	echo "KC_PROJECT_BRANCH = $KC_PROJECT_BRANCH"
 	echo "KC_REPO_URL = $KC_REPO_URL"
-	echo "KC_REPO_NAME = $KC_REPO_NAME"
+	echo "KC_REPO_DIR = $KC_REPO_DIR"
+	printf "-------------------------\n\n"
 }
 
 function exec_sql_scripts() {
 	cd $WORKING_DIR
-	if [ ! -d $KC_REPO_NAME ] ; then
-	  git clone ${KC_REPO_URL}
+	if [ ! -d $KC_REPO_DIR ] ; then
+		git clone ${KC_REPO_URL}
+		if [ ! -d $KC_REPO_DIR ] ; then
+			echo "ERROR: Could not acquire the github repository: $KC_REPO_URL"
+			exit 1
+		fi
 	fi
-	cd ${KC_REPO_NAME}
+	cd ${KC_REPO_DIR}
 	if [ "$KC_PROJECT_BRANCH" != "master" ] ; then
 	  git checkout $KC_PROJECT_BRANCH
 	fi

@@ -35,6 +35,7 @@ ENV MYSQL_ROOT_PASSWORD="password123"
 ENV MYSQL_DATABASE="kualidb"
 ENV MYSQL_USER="kcusername"
 ENV MYSQL_PASSWORD="kcpassword"
+ENV TZ=America/New_York
 
 ARG KC_PROJECT_BRANCH="master"
 

@@ -8,7 +8,8 @@ done
 # Perform cloudformation stack actions to create/update an empty aurora-mysql rds database.
 rds() {
   [ -z "$STACK_NAME" ] && STACK_NAME="kuali-aurora-mysql-rds"
-  [ -z "$PASSWORD_URL" ] && PASSWORD_URL="s3://kuali-research-ec2-setup/rds/password1"
+
+  setPassword
 
   case "$task" in
     create)
@@ -26,7 +27,7 @@ rds() {
       return 0
       ;;
   esac
-  local password="$(aws s3 cp $PASSWORD_URL -)"
+
   cat <<-EOF > rds-stack.sh
   aws \
     cloudformation $action \
@@ -75,17 +76,25 @@ done <<< "$(aws cloudformation describe-stacks \
   [ -z "$DB_PORT" ] && DB_PORT="$Port"
   [ -z "$DB_HOST" ] && DB_HOST="$ClusterEndpoint"
   [ -z "$KC_REPO_URL" ] && KC_REPO_URL="https://github.com/bu-ist/kuali-research.git"
-  [ -z "$DB_PASSWORD" ] && DB_PASSWORD="s3://kuali-research-ec2-setup/rds/password1"
   [ -z "$KC_PROJECT_BRANCH" ] && KC_PROJECT_BRANCH="bu-master"
   [ -z "$WORKING_DIR" ] && WORKING_DIR="$(pwd)"
   [ -z "$INSTALL_DEMO_FILES" ] && INSTALL_DEMO_FILES='true'
 
-  # If the password is actually an s3 url to a file, the password is in that file.
+  setPassword
+
+  sh setup_files/install_kuali_db.sh
+}
+
+# If the password is actually an s3 url to a file, the password is in that file.
+setPassword() {
+  [ -z "$DB_PASSWORD" ] && DB_PASSWORD="s3://kuali-research-ec2-setup/rds/password1"
   if [ "${DB_PASSWORD:0:5}" == "s3://" ] ; then
     DB_PASSWORD="$(aws s3 cp $DB_PASSWORD -)"
   fi
-
-  sh setup_files/install_kuali_db.sh
+  if [ -z "$DB_PASSWORD" ] ; then
+    echo "ERROR! DB_PASSWORD is empty!!!"
+    exit 1
+  fi
 }
 
 
