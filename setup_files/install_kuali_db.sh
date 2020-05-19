@@ -82,7 +82,7 @@ function exec_sql_scripts() {
 				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_UPGRADE.log 2>&1
 		fi
 		# INSTALL THE DEMO FILES
-		if [ "${INSTALL_DEMO_FILES,,}" == "true"] ; then
+		if [ "${INSTALL_DEMO_FILES,,}" == "true" ] ; then
 			if [ -f ${version}_mysql_rice_demo.sql ]; then
 				mysql \
 					--host=$KC_DB_HOST \
