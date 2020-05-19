@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  A basic CloudFormation template for an RDS Aurora single mysql instance cluster of the kuali research "out of the box" schema.
+  Other Examples -
+    https://github.com/widdix/aws-cf-templates/blob/master/state/rds-aurora.yaml
+    https://github.com/aws-samples/aws-aurora-cloudformation-samples/blob/master/cftemplates/Aurora-Postgres-DB-Cluster.yml
+    https://gist.github.com/sjparkinson/e1c2f74475d2e8625ce4af85b892ab13
+
+Parameters:
+
+  DatabaseName:
+    Default: kualidb
+    Description: Database Name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_]*$" 
+    ConstraintDescription: Must start with a letter. Only numbers, letters, and _ accepted. max length 64 characters 
+
+  DatabasePort:
+    Description: TCP/IP Port for the Database Instance
+    Type: Number
+    Default: 3306
+    ConstraintDescription: 'Must be in the range [1115-65535]'
+    MinValue: 1115
+    MaxValue: 65535
+
+  DatabaseUsername:
+    Default: kcusername
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must be between 1 to 16 alphanumeric characters.
+    Description: The database admin account user name, between 1 to 16 alphanumeric characters.
+    MaxLength: '16'
+    MinLength: '1'
+    Type: String
+
+  DatabasePassword:
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must be between 8 to 41 alphanumeric characters.
+    Description: The database admin account password, between 8 to 41 alphanumeric characters.
+    MaxLength: '41'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+
+  # aws rds describe-db-engine-versions --engine aurora-mysql --query 'reverse(DBEngineVersions[].EngineVersion)' --output text | sed 's/[[:space:]]/\n/g'
+  EngineVersion:
+    Default: 5.7.mysql_aurora.2.07.2
+    Description: 'Aurora engine and version'
+    Type: String
+    AllowedValues:
+      - 5.7.mysql_aurora.2.07.2
+      - 5.7.mysql_aurora.2.07.1
+      - 5.7.mysql_aurora.2.07.0
+      - 5.7.mysql_aurora.2.06.0
+      - 5.7.mysql_aurora.2.05.0
+      - 5.7.mysql_aurora.2.04.8
+      - 5.7.mysql_aurora.2.04.7
+      - 5.7.mysql_aurora.2.04.6
+      - 5.7.mysql_aurora.2.04.5
+      - 5.7.mysql_aurora.2.04.4
+      - 5.7.mysql_aurora.2.04.3
+      - 5.7.mysql_aurora.2.04.2
+      - 5.7.mysql_aurora.2.04.1
+      - 5.7.mysql_aurora.2.04.0
+      - 5.7.mysql_aurora.2.03.4
+      - 5.7.mysql_aurora.2.03.3
+      - 5.7.mysql_aurora.2.03.2
+      - 5.7.12
+
+  DBInstanceClass:
+    Default: db.r4.large
+    Description: Database Instance Class. db.r5 instance classes are supported for Aurora PostgreSQL 10.6 or later. db.t3.medium instance class is supported for Aurora PostgreSQL 10.7 or later.
+    Type: String
+    AllowedValues:
+      - db.t2.small
+      - db.t3.medium
+      - db.r4.large
+      - db.r4.xlarge
+      - db.r4.2xlarge
+      - db.r4.4xlarge
+      - db.r4.8xlarge
+      - db.r4.16xlarge
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.8xlarge
+      - db.r5.12xlarge
+      - db.r5.16xlarge
+      - db.r5.24xlarge
+
+
+Resources:
+
+  DBClusterSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Ref 'AWS::StackName'
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: !Ref DatabasePort
+        ToPort: !Ref DatabasePort
+        CidrIp: "0.0.0.0/0"
+
+  DBClusterParameterGroup: 
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties: 
+      Description: CloudFormation Kuali Research Aurora Cluster Parameter Group
+      Family: aurora-mysql5.7
+      Parameters: 
+        time_zone: US/Eastern
+
+  DBParameterGroup: 
+    Type: AWS::RDS::DBParameterGroup
+    Properties: 
+      Description: CloudFormation Kuali Research Aurora Parameter Group
+      Family: aurora-mysql5.7
+      Parameters: 
+        sql_mode: IGNORE_SPACE
+
+  DatabaseCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: aurora-mysql
+      EngineMode: provisioned
+      EngineVersion: !Ref EngineVersion
+      DatabaseName: !Ref DatabaseName
+      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+      MasterUsername: !Ref DatabaseUsername
+      MasterUserPassword: !Ref DatabasePassword
+      Port: !Ref DatabasePort
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: 01:00-02:00
+      PreferredMaintenanceWindow: sat:03:00-sat:04:00
+      EnableHttpEndpoint: "true"
+      VpcSecurityGroupIds:
+        - !GetAtt  DBClusterSecurityGroup.GroupId
+
+  DatabasePrimaryInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: aurora-mysql
+      DBClusterIdentifier: !Ref DatabaseCluster
+      DBInstanceClass: !Ref DBInstanceClass
+      PubliclyAccessible: "true"
+ 
+
+Outputs:
+
+  ClusterEndpoint:
+    Description: 'Aurora Cluster/Writer Endpoint'
+    Value: !GetAtt 'DatabaseCluster.Endpoint.Address'
+    Export:
+      Name: !Sub '${AWS::StackName}-DNSName'
+  ReaderEndpoint:
+    Description: 'Aurora Reader Endpoint'
+    Value: !GetAtt 'DatabaseCluster.ReadEndpoint.Address'
+    Export:
+      Name: !Sub '${AWS::StackName}-ReadDNSName'
+  DBPort:
+    Description: 'Aurora Endpoint Port'
+    Value: !GetAtt 'DatabaseCluster.Endpoint.Port'
+    Export:
+      Name: !Sub '${AWS::StackName}-DBPort'
+  DBUsername:
+    Description: 'Database master username'
+    Value: !Ref DatabaseUsername
+    Export:
+      Name: !Sub '${AWS::StackName}-DBUsername'
+  DBName:
+    Description: 'Database Name'
+    Value: !Ref DatabaseName
+    Export:
+      Name: !Sub '${AWS::StackName}-DBName'
+    
+  MysqlCommandLine:    
+    Description: Mysql Command Line example
+    Value: !Join
+      - ""
+      - - "mysql"
+        - " --user="
+        - !Ref DatabaseUsername
+        - " --password=insert_password_here"
+        - " --host="
+        - !GetAtt "DatabaseCluster.Endpoint.Address" 
+        - " --port="
+        - !GetAtt "DatabaseCluster.Endpoint.Port"
+        - " "
+        - !Ref DatabaseName
+        - " -e 'show databases;'"

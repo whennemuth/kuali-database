@@ -14,26 +14,29 @@
 #    the Dockerfile /usr/bin/mysqld_safe leads to the mysqld process getting dropped for some unknown reason and
 #    this instruction must be overridden in the docker run command with just "mysqld":
 #       docker run -d --name kc -h 127.0.0.1 -p 3306:3306 jefferyb/kuali_db_mysql mysqld
+#    test the container with the following:
+#       
 # 2) Due to problems with mysqld rejecting logins from users, skip-grant-tables is set in mysqld.cnf
 #    This is obviously not secure, but is ok for local development.
 # 3) Attempts made to edit the /etc/hosts file could never have worked. The hosts file is created at docker 
 #    container runtime and cannot be edited in a Dockerfile RUN instruction.
-#
+#       mysql -u root -h 127.0.0.1 kualidb -e "show tables;"
 # NOTE: If you are running this container on a remote host and would like to connect mysql workbench from your
 #       laptop to it, tunnel into the host over port 3306 as in the following example:
 #          ssh -i ~/.ssh/buaws-kuali-rsa-warren -N -v -L 3306:10.57.237.89:3306 ec2-user@10.57.237.89
 
 # Pull base image.
 FROM ubuntu:16.04
-MAINTAINER Jeffery Bagirimvano <jeffery.rukundo@gmail.com>
 
 RUN mkdir -p /setup_files
 ADD setup_files /setup_files
 
 ENV MYSQL_ROOT_PASSWORD="password123"
-ENV MYSQL_DATABASE="kualicoeusdb"
+ENV MYSQL_DATABASE="kualidb"
 ENV MYSQL_USER="kcusername"
 ENV MYSQL_PASSWORD="kcpassword"
+
+ARG KC_PROJECT_BRANCH="master"
 
 # Install MySQL.
 RUN \
@@ -68,7 +71,10 @@ RUN \
   ###
   mkdir -p /var/run/mysqld 2> /dev/null && \
   chown mysql:mysql /var/run/mysqld && \
-  cd /setup_files; ./install_kuali_db.sh "$(curl --silent http://172.17.0.1:8000/repoUrl.txt)" && \
+  cd /setup_files && \
+  ./install_kuali_db.sh \
+    "KC_REPO_URL=$(curl --silent http://172.17.0.1:8000/repoUrl.txt)" \
+    "KC_PROJECT_BRANCH=$KC_PROJECT_BRANCH" && \
   rm -fr /setup_files && \
   echo "Done!!!"
 
