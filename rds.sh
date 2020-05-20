@@ -5,9 +5,10 @@ for nv in $@ ; do
   eval "$nv" 2> /dev/null
 done
 
+[ -z "$STACK_NAME" ] && STACK_NAME="kuali-aurora-mysql-rds"
+
 # Perform cloudformation stack actions to create/update an empty aurora-mysql rds database.
 rds() {
-  [ -z "$STACK_NAME" ] && STACK_NAME="kuali-aurora-mysql-rds"
 
   setPassword
 
@@ -49,7 +50,7 @@ EOF
 
 # Build and populate an empty mysql database with a kuali-research schema.
 populate() {
-   
+  
   # Get the outputs of the cloudformation stack in which the mysql rds database was created.
   #   - DBName
   #   - DBUsername
@@ -57,26 +58,31 @@ populate() {
   #   - ClusterEndpoint
   #   - ReaderEndpoint
   #   - MysqlCommandLine
-while read -r line; do
-  name="$(echo "$line" | cut -f1)"
-  value="$(echo "$line" | cut -f2-)"
-  echo "$name=\"$value\""
-  eval "$name=\"$value\""
-done <<< "$(aws cloudformation describe-stacks \
-  --stack-name kuali-aurora-mysql-rds \
-  --query 'Stacks[].Outputs[].[OutputKey, OutputValue]' \
-  --output text)";
+  while read -r line; do
+    name="$(echo "$line" | cut -f1)"
+    value="$(echo "$line" | cut -f2-)"
+    echo "$name=\"$value\""
+    eval "$name=\"$value\""
+  done <<< "$(aws cloudformation describe-stacks \
+    --stack-name $STACK_NAME \
+    --query 'Stacks[].Outputs[].[OutputKey, OutputValue]' \
+    --output text)";
+
+  [ -z "$DB_HOST" ] && DB_HOST="$ClusterEndpoint"
+  if [ -z "$DB_HOST" ] ; then
+    echo "ERROR! Cannot determine database host address."
+    exit 1
+  fi
 
   # Apply default values to missing parameters.
-  [ -z "$DB_NAME" ] && DB_NAME="kualidb"
   [ -z "$DB_NAME" ] && DB_NAME="$DBName"
-  [ -z "$DB_USERNAME" ] && DB_USERNAME="kcusername"
+  [ -z "$DB_NAME" ] && DB_NAME="kualidb"
   [ -z "$DB_USERNAME" ] && DB_USERNAME="$DBUsername"
-  [ -z "$DB_PORT" ] && DB_PORT="3306"
+  [ -z "$DB_USERNAME" ] && DB_USERNAME="kcusername"
   [ -z "$DB_PORT" ] && DB_PORT="$Port"
-  [ -z "$DB_HOST" ] && DB_HOST="$ClusterEndpoint"
+  [ -z "$DB_PORT" ] && DB_PORT="3306"
   [ -z "$KC_REPO_URL" ] && KC_REPO_URL="https://github.com/bu-ist/kuali-research.git"
-  [ -z "$KC_PROJECT_BRANCH" ] && KC_PROJECT_BRANCH="bu-master"
+  [ -z "$KC_PROJECT_BRANCH" ] && KC_PROJECT_BRANCH="master"
   [ -z "$WORKING_DIR" ] && WORKING_DIR="$(pwd)"
   [ -z "$INSTALL_DEMO_FILES" ] && INSTALL_DEMO_FILES='true'
 

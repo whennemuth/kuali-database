@@ -1,21 +1,38 @@
-### Kuali Coeus Database for docker or RDS
+## Kuali Coeus Database for docker or RDS
 
 This repository is based on and extends: [https://github.com/jefferyb/docker-mysql-kuali-coeus](https://github.com/jefferyb/docker-mysql-kuali-coeus)
 
 The purpose is to create a mysql database for the kuali-research application to connect to in one of two ways:
 
-1. #### **Dockerized:**
+1. ### **Dockerized:**
 
    During a docker image build:
 
-   - Mysql is installed.
-   - The git repository that contains the kuali research application is cloned to acquire all of the mysql database scripts that bring the database from a blank state all the way up to the current state as of the HEAD of the repo.
-   - setup_files\install_kuali_db.sh is run to execute each script from oldest to newest against the mysql database.
-   - A container is run against the image with port 3306 published or exposed.
-   - The kuali-research application can be run locally from an IDE or in another container and is configured to connect to the  database running from the container.
+   1. Mysql is installed.
+   2. The git repository that contains the kuali research application is cloned to acquire all of the mysql database scripts that bring the database from a blank state all the way up to the current state as of the HEAD of the repo.
+   3. setup_files\install_kuali_db.sh is run to execute each script from oldest to newest against the mysql database.
 
+   Once the image is built, you can run a container against it with port 3306 published or exposed.
+   Then, the kuali-research application can be run locally from an IDE or in another docker container and is configured to connect to the  database container.
+       
 
    **To use:**
+
+   Script: docker.sh
+
+   Methods: 
+
+   - build
+     Parameters:
+     - KC_REPO_URL
+       Specifies the github repository for the kuali coeus application. If the github repository is private, the provide it like this:
+       `https://your_username:your_password@github.com/bu-ist/kuali-research.git`
+       *Required: No, default: "https://github.com/bu-ist/kuali-research.git"*
+     - KC_PROJECT_BRANCH
+       Specifies the branch to check out from the kuali coeus github repo once cloned.
+       *Required: No, default: "master"*
+   - run
+     Parameters: NONE
 
    ```
    # 1) Acquire this repository:
@@ -24,87 +41,117 @@ The purpose is to create a mysql database for the kuali-research application to 
    
    # 2) Build the mysql database image example:
    sh docker.sh build \
-     "https://your_username:your_password@github.com/bu-ist/kuali-research.git" \
-     "bu-master"
-     
+       "KC_REPO_URL=https://your_username:your_password@github.com/bu-ist/kuali-research.git" \
+       "KC_PROJECT_BRANCH=bu-master"
+       
+       # Or use default values:
+       sh docker.sh build
+   
    # 3) Run the mysql database image:
    sh docker.sh run
    
    # 4) Test the database with a query (requires mysql client installed):
    mysql \
-     -u root \
-     -h 127.0.0.1 \
-     --password=password123 \
-     kualidb \
-     -e "show tables;"
+       -u root \
+       -h 127.0.0.1 \
+       --password=password123 \
+       kualidb \
+       -e "show tables;"
    ```
 
    *NOTE: Step number 2 above  has an optional second parameter - it will default to "master" if not provided, but it indicates the branch that will checked out from the cloned kuali-research git repository.*
+       
 
-2. #### **Mysql-aurora in Amazon RDS**
+2. ### **Mysql-aurora in Amazon RDS**
 
    The database is built as an Amazon mysql-aurora RDS database as follows:
 
-   - A cloudformation template is run to create a single node RDS cluster.
-   - The git repository that contains the kuali research application is cloned to acquire all of the mysql database scripts that bring the database from a blank state all the way up to the current state as of the HEAD of the repo. 
-   - setup_files\install_kuali_db.sh is run to execute each script from oldest to newest against the RDS cluster.
-   - The kuali-research application can be run locally from an IDE or in another container and is configured to connect to the RDS cluster.
-
-
+   1. A cloudformation template is run to create a single node RDS cluster.
+   2. The git repository that contains the kuali research application is cloned to acquire all of the mysql database scripts that bring the database from a blank state all the way up to the current state as of the HEAD of the repo. 
+   3. setup_files\install_kuali_db.sh is run to execute each script from oldest to newest against the RDS cluster.
+   4. The kuali-research application can be run locally from an IDE or in another container and is configured to connect to the RDS cluster.
+          
+   
    **To use (stack operations):**
-
+   
+   Script: rds.sh
+   
+   Methods: 
+   
+   - create
+   - update
+   - delete
+   - validate
+   
    Parameters:
-
-   - STACK_TASK:
-     Specifies if the stack operation (create, update, or delete)
+   
    - STACK_NAME:
-     Specifies the name to give to a stack when creating it, or the name of the stack to update/delete. 
+      Specifies the name to give to a stack when creating it, or the name of the stack to update/delete. *Methods: create, update, delete*
+      *Required: No, Default: "kuali-aurora-mysql-rds"*
    - DB_PASSWORD:
-     Specifies the path of a file in S3 that contains the password you want to apply for access to the rds database.
-
+      Specifies either a raw password or the path of a file in S3 that contains the password you want to apply for access to the rds database.
+      *Methods: create, update, delete*
+      *Required: No, Default: "s3://kuali-research-ec2-setup/rds/password1"*
+   
    ```
-   # 1) Acquire this repository:
+   # 1) Acquire this repository if not already:
    git clone https://github.com/jefferyb/docker-mysql-kuali-coeus.git
    cd docker-mysql-kuali-coeus
+       
+   # 2) Optional: If you have made changes to the yaml template, you can validate them.
+   sh rds.sh validate
+      
+   # 3) Create the rds cluster through cloudformation 
+   S3_BUCKET="kuali-research-ec2-setup" && \
+   sh rds.sh create \
+       "STACK_NAME=kuali-aurora-mysql-rds" \
+       "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
    
-   # 2) Create the rds cluster through cloudformation 
-       S3_BUCKET="kuali-research-ec2-setup" && \
-       sh rds.sh create \
-         "STACK_NAME=kuali-aurora-mysql-rds" \
-         "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
-     
        # The parameters shown above happen to be the defaults, so the equivalent is:
        sh rds.sh rds
    
        # To update a stack that has already been created:
-       sh rds.sh update \
-         "STACK_NAME=kuali-aurora-mysql-rds" \
-         "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
+       sh rds.sh update "STACK_NAME=kuali-aurora-mysql-rds"
    
        # And to delete the stack:
        sh rds.sh delete "STACK_NAME=kuali-aurora-mysql-rds"
    ```
-
-
-   **To use (database creation/population):**
-
+   
+   ​    
+   
+   **To use (database initialization/population):**
+   
+   Script: rds.sh
+   
+   Methods: 
+   
+   - populate
+   
    Parameters:
-
-   - DB_USERNAME:
-     The name of the kuali-research database user.
-     *Required: No, default kcusername*
+   
+   - STACK_NAME:
+     The name of the cloudformation stack in which the rds database was created.
+     With this stack name known, each of the following parameters can be determined via an AWS CLI call for stack outputs. 
+     *Required: No, default "kuali-aurora-mysql-rds"*
+     - DB_HOST:
+       The name of the host for the kuali-research database cluster. This would have been one of the outputs of the rds cluster stack creation.
+       *Required: [If no stack exists for lookup that matches provided STACK_NAME or its default value]*
+     - DB_NAME:
+       The name of the kuali-research database.
+       *Required: No, default: successful stack lookup value using provided STACK_NAME or its default value, else: "kualidb"*
+     - DB_USERNAME:
+       The name of the kuali-research database user.
+       *Required: No, default: successful stack lookup value using provided STACK_NAME or its default value, else: "kcusername"*
+     - DB_PORT:
+       The port to connect to the kuali-research database over.
+       *Required: No, default: successful stack lookup value using provided STACK_NAME or its default value, else: 3306*
    - DB_PASSWORD:
      The password for the kuali-research database user. You can provide the raw password, or you can provide the path of a file in S3 that contains the password.
      *Required: Yes*
-   - DB_NAME:
-     The name of the kuali-research database.
-     *Required: No, default: kualidb*
-   - DB_HOST:
-     The name of the host for the kuali-research database cluster. This would have been one of the outputs of the rds cluster stack creation.
-     *Required: Yes*
-   - DB_PORT:
-     The port to connect to the kuali-research database over.
-     *Required: No, default: 3306*
+   - KC_REPO_URL:
+     Specifies the github repository for the kuali coeus application. If the github repository is private, the provide it like this:
+     `https://your_username:your_password@github.com/bu-ist/kuali-research.git`
+     *Required: No, default: "https://github.com/bu-ist/kuali-research.git"*
    - KC_PROJECT_BRANCH:
      The kuali-research git repository branch to checkout for the sql scripts to run.
      *Required: No, default: master*
@@ -113,23 +160,38 @@ The purpose is to create a mysql database for the kuali-research application to 
      *Required: No, default: true*
    - WORKING_DIR:
      The root folder, containing a subfolder of the cloned github repo for the kuali-research app (or where it is to be cloned if it does not already exist)
-
+     *Required: No, default: [current directory]*
+   
    ```
-   # Create and populate the kuali-research database in the rds cluster:
+    1) Acquire this repository if not already:
+   git clone https://github.com/jefferyb/docker-mysql-kuali-coeus.git
+   cd docker-mysql-kuali-coeus
+   
+   # 2) Create and populate the kuali-research database in the rds cluster (EXAMPLE):
    sh rds.sh populate \
-     "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
-     "DB_USERNAME=kcusername" \
-     "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
-     "DB_NAME=kualidb" \
-     "KC_PROJECT_BRANCH=bu-master" \
-     "DB_HOST=http://kuali-aurora-mysql-rds-databasecluster-j4nektrwrrd6.cluster-cnc9dm5uqxog.us-east-1.rds.amazonaws.com/" \
-     "DB_PORT=3306" \
-     "WORKING_DIR=$(pwd)" \
-     "INSTALL_DEMO_FILES='true'"
-     
-     # or use defaults.
-     sh rds.sh populate 
+       "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
+       "DB_USERNAME=kcusername" \
+       "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
+       "DB_NAME=kualidb" \
+       "KC_PROJECT_BRANCH=bu-master" \
+       "DB_HOST=http://kuali-aurora-mysql-rds-databasecluster-j4nektrwrrd6.cluster-cnc9dm5uqxog.us-east-1.rds.amazonaws.com/" \
+       "DB_PORT=3306" \
+       "WORKING_DIR=$(pwd)" \
+       "INSTALL_DEMO_FILES='true'"
+   
+   # or exclude db parameters and include STACK_NAME to get them via a stack output lookup:
+   sh rds.sh populate \
+       "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
+       "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
+       "KC_PROJECT_BRANCH=bu-master" \    "DB_PORT=3306" \
+       "WORKING_DIR=$(pwd)" \
+       "INSTALL_DEMO_FILES='true'"
+   
+   # This example uses default stack output lookup results and defaults all remaining values:
+   sh rds.sh populate
    ```
+   
+   
 
    
 

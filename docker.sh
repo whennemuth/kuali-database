@@ -1,15 +1,14 @@
 #!/bin/bash
 
+for nv in $@ ; do
+  eval "$nv" 2> /dev/null
+done
+
 # Build a docker image from which can be started containers that are running a generic kuali-research mysql database.
 build() {
-  local repoUrl="$1"
-  if [ -z "$repoUrl" ] ; then
-    printf "\nWhat is the kuali github repo url?"
-    printf "\nExample: https://your_username:your_password@github.com/bu-ist/kuali-research.git"
-    printf "\nEnter here: "
-    read repoUrl
-  fi
-  echo "$repoUrl" > repoUrl.txt
+
+  [ -z "$KC_REPO_URL" ] && KC_REPO_URL="https://github.com/bu-ist/kuali-research.git"
+  echo "$KC_REPO_URL" > repoUrl.txt
 
   # Make sure there are no containers running from previous activity.
   docker rm -f secrets-server 2> /dev/null
@@ -25,7 +24,7 @@ build() {
     busybox httpd -f -p 8000 -h /files
 
   # Build the image.
-  docker build -t kuali_db_mysql --build-arg KC_PROJECT_BRANCH=bu-master .
+  docker build -t kuali_db_mysql --build-arg KC_PROJECT_BRANCH=$KC_PROJECT_BRANCH .
 
   docker stop secrets-server
   

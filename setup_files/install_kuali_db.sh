@@ -36,7 +36,6 @@ initialize() {
 	MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
 
 	printf "\nEnvironment variables: \n"
-	printf "-------------------------\n"
 	echo "WORKING_DIR = $WORKING_DIR"
 	echo "DB_USERNAME = $DB_USERNAME"
 	echo "DB_PASSWORD = $(echo "$DB_PASSWORD" | sed 's/./*/g')"
@@ -45,7 +44,7 @@ initialize() {
 	echo "KC_PROJECT_BRANCH = $KC_PROJECT_BRANCH"
 	echo "KC_REPO_URL = $KC_REPO_URL"
 	echo "KC_REPO_DIR = $KC_REPO_DIR"
-	printf "-------------------------\n\n"
+	printf "\n"
 }
 
 function exec_sql_scripts() {
@@ -128,6 +127,21 @@ function exec_sql_scripts() {
 			${WORKING_DIR}/SQL_LOGS/V602_011__JASPER_FEATURE_FLAG.log 2>&1
 	fi
 	sleep 2
+}
+
+function fixBuggyScripts() {
+	cd ${MYSQL_SQL_FILES_FOLDER}
+
+  sed -i 's/\(\\\.\)/-- \1/g' 1506_mysql_rice_server_upgrade.sql
+	sed -i "s/\\(commit\\)/select 'Skipping 1506_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1506_mysql_rice_server_upgrade.sql
+
+  sed -i 's/\(\\\.\)/-- \1/g' 1601_mysql_rice_server_upgrade.sql
+	sed -i "s/\\(commit\\)/select 'Skipping 1601_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1601_mysql_rice_server_upgrade.sql
+
+  sed -i 's/\(\\\.\)/-- \1/g' 1603_mysql_rice_server_upgrade.sql
+	sed -i "s/\\(commit\\)/select 'Skipping 1603_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1603_mysql_rice_server_upgrade.sql
+
+	
 }
 
 # Check for errors
