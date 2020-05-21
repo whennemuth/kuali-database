@@ -203,6 +203,6 @@ function check_sql_errors {
  
 initialize $@
 
-# exec_sql_scripts
+exec_sql_scripts
 
-# check_sql_errors
+check_sql_errors
