@@ -50,7 +50,10 @@ The purpose is to create a mysql database for the kuali-research application to 
    # 3) Run the mysql database image:
    sh docker.sh run
    
-   # 4) Test the database with a query (requires mysql client installed):
+   # 4) [Optional] If running the container on a remote server, tunnel to it to run mysql commands locally. Example:
+   ssh -i ~/.ssh/buaws-kuali-rsa-warren -N -v -L 3306:10.57.237.89:3306 ec2-user@10.57.237.89
+   
+   # 5) Test the database with a query (requires mysql client installed):
    mysql \
        -u root \
        -h 127.0.0.1 \
@@ -108,7 +111,7 @@ The purpose is to create a mysql database for the kuali-research application to 
        "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
    
        # The parameters shown above happen to be the defaults, so the equivalent is:
-       sh rds.sh rds
+       sh rds.sh rds create
    
        # To update a stack that has already been created:
        sh rds.sh update "STACK_NAME=kuali-aurora-mysql-rds"
@@ -189,6 +192,10 @@ The purpose is to create a mysql database for the kuali-research application to 
    
    # This example uses default stack output lookup results and defaults all remaining values:
    sh rds.sh populate
+   
+   # This example does the same as the last, except specifys a directory for the git repo:
+   sh rds.sh populate \
+     "KC_REPO_URL=/c/some/path/kuali-research"
    ```
    
    

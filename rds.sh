@@ -10,9 +10,12 @@ done
 # Perform cloudformation stack actions to create/update an empty aurora-mysql rds database.
 rds() {
 
+  rdstask="$1"
+  shift
+
   setPassword
 
-  case "$task" in
+  case "$rdstask" in
     create)
       action="create-stack"
       ;;
@@ -39,7 +42,7 @@ rds() {
     --parameters '[
       { 
         "ParameterKey" : "DatabasePassword",
-        "ParameterValue" : "$password"
+        "ParameterValue" : "$DB_PASSWORD"
       }
     ]'
 EOF

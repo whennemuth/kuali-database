@@ -25,18 +25,24 @@ initialize() {
 	# KC_REPO_URL can be a directory or the github address of the kuali coeus app.
 	if [ -d "$KC_REPO_URL" ] ; then
 		KC_REPO_DIR=$KC_REPO_URL
-	elif [ -z "$KC_REPO_URL" ] ; then
+		MYSQL_SQL_FILES_FOLDER="${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
+	elif [ -n "$KC_REPO_URL" ] ; then
+		KC_REPO_DIR="$(echo "$KC_REPO_URL" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
+		if [ -z "$KC_REPO_DIR" ] ; then
+			echo "ERROR! \"$KC_REPO_URL\" is not a directory or a git url."
+			exit 1;
+		fi
+		MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
+	else
 		echo "Missing kuali github repository url or existing directory!!!"
 		exit 1
-	else
-		KC_REPO_DIR="$(echo "$KC_REPO_URL" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
 	fi
 	[ -z "$KC_REPO_DIR" ] && echo "ERROR! Cannot determine repo name from \"${KC_REPO_URL}\"!!!" && exit 1
 	
-	MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
 
 	printf "\nEnvironment variables: \n"
 	echo "WORKING_DIR = $WORKING_DIR"
+	echo "MYSQL_SQL_FILES_FOLDER = $MYSQL_SQL_FILES_FOLDER"
 	echo "DB_USERNAME = $DB_USERNAME"
 	echo "DB_PASSWORD = $(echo "$DB_PASSWORD" | sed 's/./*/g')"
 	echo "DB_NAME = $DB_NAME"
@@ -84,6 +90,7 @@ function exec_sql_scripts() {
 	sleep 2
 }
 
+# Construct the pieces of a mysql command depending on parameters and run the command.
 function runScript() {
 	local module="$1"
 	local version="$2"
@@ -112,6 +119,9 @@ function runScript() {
   
 	if [ -f "$sqlfile" ] ; then
 		if [ "$sqlfile" == '1905_mysql_kc_rice_server_upgrade.sql' ] ; then
+		  # Seems to be the only workable approach to fixing crazy ERROR 1064 – sqlstate 42000
+			# encountered when running this file. No syntax issues are evident, but you get this
+			# error unless you run each listed sql file individually. Cause of issue still unknown.
 			runIndividually $sqlfile $logfile
 		else
 	    mysqlRun $sqlfile $logfile
@@ -119,6 +129,7 @@ function runScript() {
 	fi
 }
 
+# Execute a single mysql command.
 function mysqlRun() {
 	local sqlfile="$1"
 	local logfile="$2"
@@ -192,6 +203,6 @@ function check_sql_errors {
  
 initialize $@
 
-exec_sql_scripts
+# exec_sql_scripts
 
-check_sql_errors
+# check_sql_errors
