@@ -25,11 +25,9 @@
 #       laptop to it, tunnel into the host over port 3306 as in the following example:
 #          ssh -i ~/.ssh/buaws-kuali-rsa-warren -N -v -L 3306:10.57.237.89:3306 ec2-user@10.57.237.89
 
-# Pull base image.
 FROM ubuntu:16.04
 
 RUN mkdir -p /setup_files
-ADD setup_files /setup_files
 
 ENV MYSQL_ROOT_PASSWORD="password123"
 ENV MYSQL_DATABASE="kualidb"
@@ -42,7 +40,7 @@ ARG KC_PROJECT_BRANCH="master"
 # Install MySQL.
 RUN \
   apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git curl dos2unix && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git curl && \
   echo "The repoUrl is: " && \
   rm -rf /var/lib/apt/lists/* && \
   # Root is getting access denied when trying access mysql. Add skip-grant-tables and then flush privileges when connected.
@@ -70,6 +68,8 @@ RUN \
     "; \
   service mysql restart
 
+ADD setup_files /setup_files
+
 # Run the sql scripts
 RUN \
   service mysql start && \
@@ -79,7 +79,7 @@ RUN \
   ./install_kuali_db.sh \
     "KC_REPO_URL=$(curl --silent http://172.17.0.1:8000/repoUrl.txt)" \
     "KC_PROJECT_BRANCH=$KC_PROJECT_BRANCH" && \
-  rm -fr /setup_files && \
+  # rm -fr /setup_files && \
   echo "Done!!!"
 
 # Expose ports.

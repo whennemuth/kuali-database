@@ -65,81 +65,69 @@ function exec_sql_scripts() {
 	fixBuggyScripts
 	
 	INSTALL_SQL_VERSION=( $(ls -v *.sql | grep -v INSTALL_TEMPLATE | sed 's/_.*//g' | uniq | sort -n ) )
-	for version in ${INSTALL_SQL_VERSION[@]:${1}}
-	do
+	for version in ${INSTALL_SQL_VERSION[@]:${1}} ; do
 		# INSTALL THE MYSQL FILES
 		echo "Installing/upgrading to version ${version}"
-		if [ -f ${version}_mysql_rice_server_upgrade.sql ]; then
-			mysql \
-				--host=$DB_HOST \
-				--port=$DB_PORT \
-				-u${DB_USERNAME} \
-				-p${DB_PASSWORD} \
-				${DB_NAME} \
-				< ${version}_mysql_rice_server_upgrade.sql > \
-				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_SERVER_UPGRADE.log 2>&1
-		fi
-		if [ -f ${version}_mysql_kc_rice_server_upgrade.sql ]; then
-			mysql \
-				--host=$DB_HOST \
-				--port=$DB_PORT \
-			  -u${DB_USERNAME} \
-				-p${DB_PASSWORD} \
-				${DB_NAME} \
-				< ${version}_mysql_kc_rice_server_upgrade.sql > \
-				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_RICE_SERVER_UPGRADE.log 2>&1
-		fi
-		if [ -f ${version}_mysql_kc_upgrade.sql ]; then
-			mysql \
-				--host=$DB_HOST \
-				--port=$DB_PORT \
-				-u${DB_USERNAME} \
-				-p${DB_PASSWORD} \
-				${DB_NAME} \
-				< ${version}_mysql_kc_upgrade.sql > \
-				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_UPGRADE.log 2>&1
-		fi
-		# INSTALL THE DEMO FILES
+
+		runScript 'rice_server' "$version"
+		runScript 'kc_rice_server' "$version"
+		runScript 'kc' "$version"
+
 		if [ "${INSTALL_DEMO_FILES,,}" == "true" ] ; then
-			if [ -f ${version}_mysql_rice_demo.sql ]; then
-				mysql \
-					--host=$DB_HOST \
-					--port=$DB_PORT \
-					-u${DB_USERNAME} \
-					-p${DB_PASSWORD} \
-					${DB_NAME} \
-					< ${version}_mysql_rice_demo.sql > \
-					${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_DEMO.log 2>&1
-			fi
-			if [ -f ${version}_mysql_kc_demo.sql ]; then
-				mysql \
-					--host=$DB_HOST \
-					--port=$DB_PORT \
-					-u${DB_USERNAME} \
-					-p${DB_PASSWORD} \
-					${DB_NAME} \
-					< ${version}_mysql_kc_demo.sql > \
-					${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_DEMO.log 2>&1
-			fi
+			runScript 'rice_demo' "$version"
+			runScript 'kc_demo' "$version"
 		fi
 	done
-	# THIS IS TO FIX THE "JASPER_REPORTS_ENABLED" ISSUE BECAUSE THIS SCRIPT DIDN'T RUN IN VERSION 1506
-	if [ $(mysql -N -s -u${DB_USERNAME} -p${DB_PASSWORD} -D ${DB_NAME} -e "select VAL from KRCR_PARM_T where PARM_NM='JASPER_REPORTS_ENABLED';" | wc -l) -eq 0 ]; then
-		mysql \
-			--host=$DB_HOST \
-			--port=$DB_PORT \
-			-u${DB_USERNAME} \
-			-p${DB_PASSWORD} ${DB_NAME} \
-			< grm/V602_011__jasper_feature_flag.sql > \
-			${WORKING_DIR}/SQL_LOGS/V602_011__JASPER_FEATURE_FLAG.log 2>&1
-	fi
+
+	fixBuggyScriptResults
+
 	sleep 2
 }
 
+function runScript() {
+	local module="$1"
+	local version="$2"
+	case "$module" in
+		kc)
+			local sqlfile="${version}_mysql_kc_upgrade.sql"
+			local logfile="${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_UPGRADE.log"
+			;;
+		rice_server)
+			local sqlfile="${version}_mysql_rice_server_upgrade.sql"
+			local logfile="${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_SERVER_UPGRADE.log"
+			;;
+		kc_rice_server)
+			local sqlfile="${version}_mysql_kc_rice_server_upgrade.sql"
+			local logfile="${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_RICE_SERVER_UPGRADE.log"
+			;;
+		kc_demo)
+			local sqlfile="${version}_mysql_kc_demo.sql"
+			local logfile="${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_DEMO.log"
+			;;
+		rice_demo)
+			local sqlfile="${version}_mysql_rice_demo.sql"
+			local logfile="${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_DEMO.log"
+			;;
+	esac
+  
+	if [ -f "$sqlfile" ] ; then
+		if [ "$sqlfile" == '1905_mysql_kc_rice_server_upgrade.sql' ] ; then
+			runIndividually $sqlfile $logfile
+		else
+	    mysqlRun $sqlfile $logfile
+		fi
+	fi
+}
+
+function mysqlRun() {
+	local sqlfile="$1"
+	local logfile="$2"
+	mysql --host=$DB_HOST --port=$DB_PORT -u${DB_USERNAME} -p${DB_PASSWORD} ${DB_NAME} < $sqlfile > $logfile 2>&1
+}
+
+# Mysql .sql files are modified here before being run so as to prevent the runtime errors they will cause.
 function fixBuggyScripts() {
 	cd ${MYSQL_SQL_FILES_FOLDER}
-
-	dos2unix 1905_mysql_kc_rice_server_upgrade.sql
 
   sed -i 's/\(\\\.\)/-- \1/g' 1506_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1506_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1506_mysql_rice_server_upgrade.sql
@@ -156,6 +144,27 @@ function fixBuggyScripts() {
 	  -- Preparatory fix for upcoming ./kc/bootstrap/V1901_002__nsf_cover_page_1_9.sql
 	  update question set question_id = (question_id * -1) where question_id in (10110, 10111, 10112);
 EOF
+}
+
+# Those mysql .sql files that could not be corrected before being run will have produced results that need to be corrected after being run.
+function fixBuggyScriptResults() {
+	# THIS IS TO FIX THE "JASPER_REPORTS_ENABLED" ISSUE BECAUSE THIS SCRIPT DIDN'T RUN IN VERSION 1506
+	if [ $(mysql -N -s -u${DB_USERNAME} -p${DB_PASSWORD} -D ${DB_NAME} -e "select VAL from KRCR_PARM_T where PARM_NM='JASPER_REPORTS_ENABLED';" | wc -l) -eq 0 ]; then
+	  mysqlRun \
+		  grm/V602_011__jasper_feature_flag.sql \
+			${WORKING_DIR}/SQL_LOGS/V602_011__JASPER_FEATURE_FLAG.log
+	fi
+}
+
+function runIndividually() {
+	cd ${MYSQL_SQL_FILES_FOLDER}
+	sqlfile="$1"
+	logfile="$2"
+  while read -r line; do 
+    if [ "${line:0:5}" == '\. ./' ] ; then
+      mysqlRun "${line:3}" $logfile;
+    fi
+  done < $sqlfile
 }
 
 # Check for errors
