@@ -139,6 +139,8 @@ function exec_sql_scripts() {
 function fixBuggyScripts() {
 	cd ${MYSQL_SQL_FILES_FOLDER}
 
+	dos2unix 1905_mysql_kc_rice_server_upgrade.sql
+
   sed -i 's/\(\\\.\)/-- \1/g' 1506_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1506_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1506_mysql_rice_server_upgrade.sql
 
@@ -148,10 +150,11 @@ function fixBuggyScripts() {
   sed -i 's/\(\\\.\)/-- \1/g' 1603_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1603_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1603_mysql_rice_server_upgrade.sql
 
-  cat <<EOF > 1901.1_mysql_kc_upgrade.sql
-	  # Preparatory fix for upcoming ./kc/bootstrap/V1901_002__nsf_cover_page_1_9.sql
+  sed -i '21 a \\\. ./kc/bootstrap/V1901_002__nsf_cover_page_1_9_fix.sql' 1901_mysql_kc_upgrade.sql
+
+  cat <<EOF > ./kc/bootstrap/V1901_002__nsf_cover_page_1_9_fix.sql
+	  -- Preparatory fix for upcoming ./kc/bootstrap/V1901_002__nsf_cover_page_1_9.sql
 	  update question set question_id = (question_id * -1) where question_id in (10110, 10111, 10112);
-		commit;
 EOF
 }
 

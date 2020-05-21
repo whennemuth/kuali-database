@@ -42,7 +42,7 @@ ARG KC_PROJECT_BRANCH="master"
 # Install MySQL.
 RUN \
   apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git curl && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server git curl dos2unix && \
   echo "The repoUrl is: " && \
   rm -rf /var/lib/apt/lists/* && \
   # Root is getting access denied when trying access mysql. Add skip-grant-tables and then flush privileges when connected.
