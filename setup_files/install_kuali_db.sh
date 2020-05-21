@@ -61,6 +61,9 @@ function exec_sql_scripts() {
 	  git checkout $KC_PROJECT_BRANCH
 	fi
 	cd ${MYSQL_SQL_FILES_FOLDER}
+
+	fixBuggyScripts
+	
 	INSTALL_SQL_VERSION=( $(ls -v *.sql | grep -v INSTALL_TEMPLATE | sed 's/_.*//g' | uniq | sort -n ) )
 	for version in ${INSTALL_SQL_VERSION[@]:${1}}
 	do
@@ -81,7 +84,8 @@ function exec_sql_scripts() {
 				--host=$DB_HOST \
 				--port=$DB_PORT \
 			  -u${DB_USERNAME} \
-				-p${DB_PASSWORD} ${DB_NAME} \
+				-p${DB_PASSWORD} \
+				${DB_NAME} \
 				< ${version}_mysql_kc_rice_server_upgrade.sql > \
 				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_RICE_SERVER_UPGRADE.log 2>&1
 		fi
@@ -90,7 +94,8 @@ function exec_sql_scripts() {
 				--host=$DB_HOST \
 				--port=$DB_PORT \
 				-u${DB_USERNAME} \
-				-p${DB_PASSWORD} ${DB_NAME} \
+				-p${DB_PASSWORD} \
+				${DB_NAME} \
 				< ${version}_mysql_kc_upgrade.sql > \
 				${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_UPGRADE.log 2>&1
 		fi
@@ -101,7 +106,8 @@ function exec_sql_scripts() {
 					--host=$DB_HOST \
 					--port=$DB_PORT \
 					-u${DB_USERNAME} \
-					-p${DB_PASSWORD} ${DB_NAME} \
+					-p${DB_PASSWORD} \
+					${DB_NAME} \
 					< ${version}_mysql_rice_demo.sql > \
 					${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_RICE_DEMO.log 2>&1
 			fi
@@ -110,7 +116,8 @@ function exec_sql_scripts() {
 					--host=$DB_HOST \
 					--port=$DB_PORT \
 					-u${DB_USERNAME} \
-					-p${DB_PASSWORD} ${DB_NAME} \
+					-p${DB_PASSWORD} \
+					${DB_NAME} \
 					< ${version}_mysql_kc_demo.sql > \
 					${WORKING_DIR}/SQL_LOGS/${version}_MYSQL_KC_DEMO.log 2>&1
 			fi
@@ -141,7 +148,11 @@ function fixBuggyScripts() {
   sed -i 's/\(\\\.\)/-- \1/g' 1603_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1603_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1603_mysql_rice_server_upgrade.sql
 
-	
+  cat <<EOF > 1901.1_mysql_kc_upgrade.sql
+	  # Preparatory fix for upcoming ./kc/bootstrap/V1901_002__nsf_cover_page_1_9.sql
+	  update question set question_id = (question_id * -1) where question_id in (10110, 10111, 10112);
+		commit;
+EOF
 }
 
 # Check for errors
