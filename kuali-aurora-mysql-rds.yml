@@ -111,14 +111,17 @@ Resources:
       Family: aurora-mysql5.7
       Parameters: 
         time_zone: US/Eastern
+        lower_case_table_names: "1"
+        tx_isolation: READ-COMMITTED
+
 
   DBParameterGroup: 
     Type: AWS::RDS::DBParameterGroup
     Properties: 
       Description: CloudFormation Kuali Research Aurora Parameter Group
       Family: aurora-mysql5.7
-      Parameters: 
-        sql_mode: IGNORE_SPACE
+      # Parameters: 
+      #   sql_mode: [invoke the default]
 
   DatabaseCluster:
     Type: AWS::RDS::DBCluster
@@ -145,6 +148,7 @@ Resources:
     Properties:
       Engine: aurora-mysql
       DBClusterIdentifier: !Ref DatabaseCluster
+      DBInstanceIdentifier: !Ref DatabaseName
       DBInstanceClass: !Ref DBInstanceClass
       PubliclyAccessible: "true"
  

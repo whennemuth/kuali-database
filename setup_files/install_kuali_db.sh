@@ -18,10 +18,11 @@ initialize() {
 	[ -z "$WORKING_DIR" ] && WORKING_DIR=$(pwd)
 	[ -z "$INSTALL_DEMO_FILES" ] && INSTALL_DEMO_FILES="true"
 
-	if [ ! -d ${WORKING_DIR}/SQL_LOGS ] ; then
-	  mkdir -p ${WORKING_DIR}/SQL_LOGS
+	if [ -d ${WORKING_DIR}/SQL_LOGS ] ; then
+	  rm -rf ${WORKING_DIR}/SQL_LOGS
 	fi
-
+	mkdir -p ${WORKING_DIR}/SQL_LOGS
+	
 	# KC_REPO_URL can be a directory or the github address of the kuali coeus app.
 	if [ -d "$KC_REPO_URL" ] ; then
 		KC_REPO_DIR=$KC_REPO_URL
