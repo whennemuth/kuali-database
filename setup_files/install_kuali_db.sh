@@ -180,13 +180,20 @@ function runIndividually() {
 
 # Check for errors
 function check_sql_errors {
-	mkdir -p ${WORKING_DIR}/SQL_LOGS
-	cp ${WORKING_DIR}/setup_files/get_*_errors ${WORKING_DIR}/SQL_LOGS
 	cd ${WORKING_DIR}/SQL_LOGS
-	chmod +x get_*_errors
-	./get_mysql_errors
-	grep ERROR ${WORKING_DIR}/SQL_LOGS/UPGRADE_ERRORS*
 
+	# Search each log file for errors and place all results into a single dated file
+	FileName=UPGRADE_ERRORS.`eval date +%Y%m%d"."%H.%M`
+	for f in *.log;
+	do 
+		echo >> $FileName
+		echo "Processing $f file.."
+		echo [ $f ] >> $FileName
+		cat $f | grep -B5 -A3 ERROR >> $FileName
+	done
+
+	# Grep the errors file for the term ERROR - if found, report that there were errors.
+	grep ERROR ${WORKING_DIR}/SQL_LOGS/UPGRADE_ERRORS*
 	if [ $? -eq 0 ]; then
 		echo
 		echo "There were some errors during the install/upgrade. Check ${WORKING_DIR}/SQL_LOGS to make sure"
