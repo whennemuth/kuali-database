@@ -181,7 +181,7 @@ function runIndividually() {
 # Check for errors
 function check_sql_errors {
 	mkdir -p ${WORKING_DIR}/SQL_LOGS
-	cp ${WORKING_DIR}/get_*_errors ${WORKING_DIR}/SQL_LOGS
+	cp ${WORKING_DIR}/setup_files/get_*_errors ${WORKING_DIR}/SQL_LOGS
 	cd ${WORKING_DIR}/SQL_LOGS
 	chmod +x get_*_errors
 	./get_mysql_errors
