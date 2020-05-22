@@ -13,13 +13,13 @@ rds() {
   rdstask="$1"
   shift
 
-  setPassword
-
   case "$rdstask" in
     create)
+      setPassword
       action="create-stack"
       ;;
     update)
+      setPassword
       action="update-stack"
       ;;
     delete)
@@ -32,11 +32,12 @@ rds() {
       ;;
   esac
 
+  # create or update stack
   cat <<-EOF > rds-stack.sh
   aws \
     cloudformation $action \
     --stack-name $STACK_NAME \
-    $([ $rdstask != 'create' ] && echo '--no-use-previous-template') \
+    $([ "$rdstask" != 'create' ] && echo '--no-use-previous-template') \
     --template-body file://./kuali-aurora-mysql-rds.yml \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --parameters '[
