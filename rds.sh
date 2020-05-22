@@ -10,10 +10,7 @@ done
 # Perform cloudformation stack actions to create/update an empty aurora-mysql rds database.
 rds() {
 
-  rdstask="$1"
-  shift
-
-  case "$rdstask" in
+  case "$task" in
     create)
       setPassword
       action="create-stack"
@@ -37,7 +34,7 @@ rds() {
   aws \
     cloudformation $action \
     --stack-name $STACK_NAME \
-    $([ "$rdstask" != 'create' ] && echo '--no-use-previous-template') \
+    $([ "$task" != 'create' ] && echo '--no-use-previous-template') \
     --template-body file://./kuali-aurora-mysql-rds.yml \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --parameters '[
