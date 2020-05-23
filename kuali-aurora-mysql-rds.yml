@@ -104,7 +104,7 @@ Resources:
         ToPort: !Ref DatabasePort
         CidrIp: "0.0.0.0/0"
 
-  DBClusterParameterGroup: 
+  DBClusterParamGroup: 
     Type: AWS::RDS::DBClusterParameterGroup
     Properties: 
       Description: CloudFormation Kuali Research Aurora Cluster Parameter Group
@@ -115,7 +115,7 @@ Resources:
         tx_isolation: READ-COMMITTED
 
 
-  DBParameterGroup: 
+  DBParamGroup: 
     Type: AWS::RDS::DBParameterGroup
     Properties: 
       Description: CloudFormation Kuali Research Aurora Parameter Group
@@ -132,7 +132,7 @@ Resources:
       EngineMode: provisioned
       EngineVersion: !Ref EngineVersion
       DatabaseName: !Ref DatabaseName
-      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+      DBClusterParameterGroupName: !Ref DBClusterParamGroup
       MasterUsername: !Ref DatabaseUsername
       MasterUserPassword: !Ref DatabasePassword
       Port: !Ref DatabasePort
@@ -148,6 +148,7 @@ Resources:
     Properties:
       Engine: aurora-mysql
       DBClusterIdentifier: !Ref DatabaseCluster
+      DBParameterGroupName: !Ref DBParamGroup
       DBInstanceIdentifier: !Ref DatabaseName
       DBInstanceClass: !Ref DBInstanceClass
       PubliclyAccessible: "true"
