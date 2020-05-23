@@ -29,6 +29,7 @@ rds() {
         task='create'
         rds $@
       fi
+      ;;
     validate)
       aws cloudformation validate-template --template-body "file://./kuali-aurora-mysql-rds.yml"
       return 0
