@@ -23,6 +23,12 @@ rds() {
       aws cloudformation delete-stack --stack-name $STACK_NAME
       return 0
       ;;
+    recreate)
+      aws cloudformation delete-stack --stack-name $STACK_NAME
+      if stackIsDeleted ; then
+        task='create'
+        rds $@
+      fi
     validate)
       aws cloudformation validate-template --template-body "file://./kuali-aurora-mysql-rds.yml"
       return 0
@@ -103,6 +109,28 @@ setPassword() {
     exit 1
   fi
 }
+
+# Once the delete-stack command has been issued, keep checking for actual deletion to complete (give up after 30 minutes).
+stackIsDeleted() {
+  local i=1
+  while ((i<360)) ; do
+    STACK_STATUS="$(aws cloudformation describe-stacks --stack-name $STACK_NAME | grep 'StackStatus')"
+    if [ -z "$STACK_STATUS" ] ; then
+      echo "$STACK_NAME deleted!!!"
+      DELETED="true"
+      break;
+    else
+      echo "$STACK_STATUS"
+    fi
+    ((i+=1))
+    sleep 5
+  done
+  if [ -n "$STACK_STATUS" ] ; then
+    echoAndLog "ERROR! Half an hour has expired and the stack is still not deleted!"
+    return 1
+  fi
+}
+
 
 
 task="$1"

@@ -114,7 +114,7 @@ Resources:
         lower_case_table_names: "1"
         tx_isolation: READ-COMMITTED
         # Need to set the following to avoid "ERROR 1832 (HY000)" thrown when modifying a column with a foreign key constraint.
-        init_connect: "SET FOREIGN_KEY_CHECKS=0;"
+        init_connect: "SET GLOBAL FOREIGN_KEY_CHECKS=0;"
 
   DBParamGroup: 
     Type: AWS::RDS::DBParameterGroup
