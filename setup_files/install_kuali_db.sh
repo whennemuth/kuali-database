@@ -146,6 +146,8 @@ function fixBuggyScripts() {
 	# countermanded somehow if you are running mysql in rds.
 	sed -i '25 a SET FOREIGN_KEY_CHECKS = 1;' ./kc/bootstrap/V310_1_065__DML_BS2_PERSON_EXT_T.sql
 	sed -i '24 a SET FOREIGN_KEY_CHECKS = 0;' ./kc/bootstrap/V310_1_065__DML_BS2_PERSON_EXT_T.sql
+	sed -i '29 a SET FOREIGN_KEY_CHECKS = 1/' ./kc/bootstrap/V311_045__KC_TBL_EPS_PROP_PERSON_EXT.sql
+	sed -i '28 a SET FOREIGN_KEY_CHECKS = 0/' ./kc/bootstrap/V311_045__KC_TBL_EPS_PROP_PERSON_EXT.sql
 	
   sed -i 's/\(\\\.\)/-- \1/g' 1506_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1506_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1506_mysql_rice_server_upgrade.sql
