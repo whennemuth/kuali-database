@@ -27,6 +27,7 @@ rds() {
       aws cloudformation delete-stack --stack-name $STACK_NAME
       if stackIsDeleted ; then
         task='create'
+        setPassword
         action='create-stack'
       fi
       ;;
