@@ -141,6 +141,12 @@ function mysqlRun() {
 function fixBuggyScripts() {
 	cd ${MYSQL_SQL_FILES_FOLDER}
 
+	# Need to set the following to avoid "ERROR 1832 (HY000)" thrown when modifying a column with a foreign key constraint.
+  # Only happens with aurora-rds, and setting the "foreign_key_checks" system variable  to "0" globally seems to get 
+	# countermanded somehow if you are running mysql in rds.
+	sed -i '25 a SET FOREIGN_KEY_CHECKS = 1;' ./kc/bootstrap/V310_1_065__DML_BS2_PERSON_EXT_T.sql
+	sed -i '24 a SET FOREIGN_KEY_CHECKS = 0;' ./kc/bootstrap/V310_1_065__DML_BS2_PERSON_EXT_T.sql
+	
   sed -i 's/\(\\\.\)/-- \1/g' 1506_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1506_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1506_mysql_rice_server_upgrade.sql
 

@@ -104,6 +104,13 @@ Resources:
         ToPort: !Ref DatabasePort
         CidrIp: "0.0.0.0/0"
 
+  # NOTES: "ERROR 1832 (HY000)" thrown when modifying a column with a foreign key constraint seems to be an issue
+  # for some sql scripts when run against aurora-mysql. However, rds parameter groups have no entry to set the 
+  # foreign_key_checks system variable off. But even if you turn off the foreign_key_checks system variable using
+  # at the initialization of every session using the init_connect system variable, it shows up when queried for as 
+  # having been turned back on temporarily when executing the script for which this is an issue.
+  # The workaround is to exclude attempts to set foreign_key_checks off here and insert them directly into the
+  # script files themselves before running using a stream editor.
   DBClusterParamGroup: 
     Type: AWS::RDS::DBClusterParameterGroup
     Properties: 
@@ -113,8 +120,7 @@ Resources:
         time_zone: US/Eastern
         lower_case_table_names: "1"
         tx_isolation: READ-COMMITTED
-        # Need to set the following to avoid "ERROR 1832 (HY000)" thrown when modifying a column with a foreign key constraint.
-        init_connect: "SET GLOBAL FOREIGN_KEY_CHECKS=0;"
+        # init_connect: "SET FOREIGN_KEY_CHECKS=0;"
 
   DBParamGroup: 
     Type: AWS::RDS::DBParameterGroup
