@@ -146,14 +146,12 @@ function mysqlRun() {
 function fixBuggyScripts() {
 	cd ${MYSQL_SQL_FILES_FOLDER}
 
-	# Need to set the following to avoid "ERROR 1832 (HY000)" thrown when modifying a column with a foreign key constraint.
-  # Only happens with aurora-rds, and setting the "foreign_key_checks" system variable  to "0" globally seems to get 
-	# countermanded somehow if you are running mysql in rds.
-	sed -i '25 a SET FOREIGN_KEY_CHECKS = 1;' ./kc/bootstrap/V310_1_065__DML_BS2_PERSON_EXT_T.sql
-	sed -i '24 a SET FOREIGN_KEY_CHECKS = 0;' ./kc/bootstrap/V310_1_065__DML_BS2_PERSON_EXT_T.sql
-	sed -i '29 a /\nSET FOREIGN_KEY_CHECKS = 1' ./kc/bootstrap/V311_045__KC_TBL_EPS_PROP_PERSON_EXT.sql
-	sed -i '28 a SET FOREIGN_KEY_CHECKS = 0 \n/' ./kc/bootstrap/V311_045__KC_TBL_EPS_PROP_PERSON_EXT.sql
-	
+	# If a git repo, stash any changes get a clean working tree 
+	git status -s > /dev/null 2>&1
+	if [ $? -eq 0 ] ; then
+		git stash
+	fi
+
   sed -i 's/\(\\\.\)/-- \1/g' 1506_mysql_rice_server_upgrade.sql
 	sed -i "s/\\(commit\\)/select 'Skipping 1506_mysql_rice_server_upgrade.sql' AS '';\\n\\1/" 1506_mysql_rice_server_upgrade.sql
 
@@ -169,6 +167,22 @@ function fixBuggyScripts() {
 	  -- Preparatory fix for upcoming ./kc/bootstrap/V1901_002__nsf_cover_page_1_9.sql
 	  update question set question_id = (question_id * -1) where question_id in (10110, 10111, 10112);
 EOF
+
+	# Need to "ERROR 1832 (HY000)" thrown when modifying a column with a foreign key constraint.
+  # Only happens with aurora-rds, and setting the "foreign_key_checks" system variable  to "0" globally seems to get 
+	# countermanded somehow if you are running mysql in rds. So, setting foreign_key_checks off at top of all .sql files.
+	sqlfiles=( 
+		kc/bootstrap/*.sql
+		rice/bootstrap/*.sql
+		rice_server/bootstrap/*.sql
+		rice_data_only/bootstrap/*.sql
+		grm/*.sql
+	)
+	echo "Setting foreign_key_checks = 0 for all *.sql files..."
+	for sqlfile in ${sqlfiles[@]} ; do
+	  echo -en "\r$sqlfile"
+		sed -i '1s;^;SET FOREIGN_KEY_CHECKS = 0\;\n;' $sqlfile;
+	done;	
 }
 
 # Those mysql .sql files that could not be corrected before being run will have produced results that need to be corrected after being run.
@@ -178,6 +192,13 @@ function fixBuggyScriptResults() {
 	  mysqlRun \
 		  grm/V602_011__jasper_feature_flag.sql \
 			${WORKING_DIR}/SQL_LOGS/V602_011__JASPER_FEATURE_FLAG.log
+	fi
+
+	# If a git repo, trash any changes made to scripts and restore anything stashed before scripts were run
+	git status -s > /dev/null 2>&1
+	if [ $? -eq 0 ] ; then
+		git reset --hard HEAD
+		git pop
 	fi
 }
 
