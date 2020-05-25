@@ -186,7 +186,7 @@ The purpose is to create a mysql database for the kuali-research application to 
    sh rds.sh populate \
        "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
        "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
-       "KC_PROJECT_BRANCH=bu-master" \    "DB_PORT=3306" \
+       "KC_PROJECT_BRANCH=bu-master" \
        "WORKING_DIR=$(pwd)" \
        "INSTALL_DEMO_FILES='true'"
    

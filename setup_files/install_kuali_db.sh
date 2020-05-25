@@ -136,10 +136,10 @@ function mysqlRun() {
 	local logfile="$2"
 	echo "  -- $sqlfile"
 	mysql --host=$DB_HOST --port=$DB_PORT -u${DB_USERNAME} -p${DB_PASSWORD} ${DB_NAME} < $sqlfile > $logfile 2>&1
-	if [ $? -gt 0 ] ; then
-	  cat $logfile
-		exit 1
-	fi
+	# if [ $? -gt 0 ] ; then
+	#   cat $logfile
+	# 	exit 1
+	# fi
 }
 
 # Mysql .sql files are modified here before being run so as to prevent the runtime errors they will cause.
@@ -198,7 +198,7 @@ function fixBuggyScriptResults() {
 	git status -s > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then
 		git reset --hard HEAD
-		git pop
+		git stash pop
 	fi
 }
 
