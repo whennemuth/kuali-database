@@ -100,16 +100,23 @@ populate() {
   sh setup_files/install_kuali_db.sh
 }
 
-# If the password is actually an s3 url to a file, the password is in that file.
+# If the password is actually an s3 url to a kc-config.xml file, extract with the password from it.
 setPassword() {
-  [ -z "$DB_PASSWORD" ] && DB_PASSWORD="s3://kuali-research-ec2-setup/rds/password1"
+  [ -z "$DB_PASSWORD" ] && DB_PASSWORD="s3://kuali-research-ec2-setup/sb/kuali/main/config/kc-config-rds.xml"
   if [ "${DB_PASSWORD:0:5}" == "s3://" ] ; then
-    DB_PASSWORD="$(aws s3 cp $DB_PASSWORD -)"
+    DB_PASSWORD="$(getKcConfigParm 'datasource.password' $DB_PASSWORD)"
   fi
   if [ -z "$DB_PASSWORD" ] ; then
     echo "ERROR! DB_PASSWORD is empty!!!"
     exit 1
   fi
+}
+
+# Echo the value of a parameter in a kc-config.xml file stored in s3
+getKcConfigParm() {
+  parmName="$1"
+  kcConfig="$2"
+  aws s3 cp $kcConfig - | grep '<param name=\"'$parmName'\"' | grep -oP '>(.*)<' | sed 's/[<>]//g'
 }
 
 # Once the delete-stack command has been issued, keep checking for actual deletion to complete (give up after 30 minutes).

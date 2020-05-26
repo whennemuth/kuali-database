@@ -92,9 +92,9 @@ The purpose is to create a mysql database for the kuali-research application to 
       Specifies the name to give to a stack when creating it, or the name of the stack to update/delete. *Methods: create, update, delete*
       *Required: No, Default: "kuali-aurora-mysql-rds"*
    - DB_PASSWORD:
-      Specifies either a raw password or the path of a file in S3 that contains the password you want to apply for access to the rds database.
+      Specifies either a raw password or the path of a kc-config.xml file in S3 from which will be extracted for the password you want to apply for access to the rds database.
       *Methods: create, update, delete*
-      *Required: No, Default: "s3://kuali-research-ec2-setup/rds/password1"*
+      *Required: No, Default: "s3://kuali-research-ec2-setup/sb/kuali/main/config/kc-config-rds.xml"*
    
    ```
    # 1) Acquire this repository if not already:
@@ -108,7 +108,7 @@ The purpose is to create a mysql database for the kuali-research application to 
    S3_BUCKET="kuali-research-ec2-setup" && \
    sh rds.sh create \
        "STACK_NAME=kuali-aurora-mysql-rds" \
-       "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1"
+       "DB_PASSWORD=s3://kuali-research-ec2-setup/sb/kuali/main/config/kc-config-rds.xml"
    
        # The parameters shown above happen to be the defaults, so the equivalent is:
        sh rds.sh rds create
@@ -174,7 +174,7 @@ The purpose is to create a mysql database for the kuali-research application to 
    sh rds.sh populate \
        "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
        "DB_USERNAME=kcusername" \
-       "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
+       "DB_PASSWORD=s3://kuali-research-ec2-setup/sb/kuali/main/config/kc-config-rds.xml" \
        "DB_NAME=kualidb" \
        "KC_PROJECT_BRANCH=bu-master" \
        "DB_HOST=http://kuali-aurora-mysql-rds-databasecluster-j4nektrwrrd6.cluster-cnc9dm5uqxog.us-east-1.rds.amazonaws.com/" \
@@ -185,7 +185,7 @@ The purpose is to create a mysql database for the kuali-research application to 
    # or exclude db parameters and include STACK_NAME to get them via a stack output lookup:
    sh rds.sh populate \
        "KC_REPO_URL=https://github.com/bu-ist/kuali-research" \
-       "DB_PASSWORD=s3://kuali-research-ec2-setup/rds/password1" \
+       "DB_PASSWORD=s3://kuali-research-ec2-setup/sb/kuali/main/config/kc-config-rds.xml" \
        "KC_PROJECT_BRANCH=bu-master" \
        "WORKING_DIR=$(pwd)" \
        "INSTALL_DEMO_FILES='true'"
