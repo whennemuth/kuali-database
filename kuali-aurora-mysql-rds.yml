@@ -132,7 +132,7 @@ Resources:
 
   DatabaseCluster:
     Type: AWS::RDS::DBCluster
-    DeletionPolicy: Snapshot
+    DeletionPolicy: Delete
     UpdateReplacePolicy: Snapshot
     Properties:
       Engine: aurora-mysql
