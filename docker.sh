@@ -37,13 +37,19 @@ build() {
 run() {
   docker rm -f kcdb 2> /dev/null
 
+  rm -rf ingestion_xml 2> /dev/null
+  mkdir ingestion_xml
+
   docker run -d \
     --restart unless-stopped \
     --name kcdb \
     -h 127.0.0.1 \
     -p 3306:3306 \
+    -v $(pwd)/ingestion_xml:/tmp
     kuali_db_mysql \
     mysqld
+
+  echo "NOTE: Ingestion xml files available at: $(pwd)/ingestion_xml"
 }
 
 task="$1"

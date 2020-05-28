@@ -27,6 +27,7 @@ initialize() {
 	if [ -d "$KC_REPO_URL" ] ; then
 		KC_REPO_DIR=$KC_REPO_URL
 		MYSQL_SQL_FILES_FOLDER="${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
+		INGESTION_XML_DIR="${KC_REPO_DIR}/coeus-db/coeus-db-xml/src/main/resources"
 	elif [ -n "$KC_REPO_URL" ] ; then
 		KC_REPO_DIR="$(echo "$KC_REPO_URL" | grep -Po '[^\/\.]+\.git$' | cut -d'.' -f1)"
 		if [ -z "$KC_REPO_DIR" ] ; then
@@ -194,6 +195,10 @@ function fixBuggyScriptResults() {
 			${WORKING_DIR}/SQL_LOGS/V602_011__JASPER_FEATURE_FLAG.log
 	fi
 
+	# Turn on dashboard mode because it defaults to false.
+	mysql -N -s -u${DB_USERNAME} -p${DB_PASSWORD} -D ${DB_NAME} -e \
+		"UPDATE `kualidb`.`krcr_parm_t` SET `VAL` = 'true' WHERE (`PARM_NM` = 'Dashboard_Mode_Enabled');"
+
 	# If a git repo, trash any changes made to scripts and restore anything stashed before scripts were run
 	git status -s > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then
@@ -242,9 +247,44 @@ function check_sql_errors {
 	fi
 	echo
 }
+
+ZipInstalled() {
+  git --version > /dev/null 2>&1 && [ "$?" == "0" ] && true || false
+}
+
+function create_ingestion_zip_files() {
+	if ! ZipInstalled ; then
+		echo "Ingestion xml files not prepared because zip program is not installed."
+		return 1
+	fi
+	local rootdir="$(echo "${MYSQL_SQL_FILES_FOLDER}" | awk 'BEGIN { FS = "resources" } { print $1 }')resources"	
+	if [ -d /tmp ] ; then
+		local targetdir='/tmp'
+	elif [ -d "$WORKING_DIR" ] ; then
+		local targetdir="$WORKING_DIR"
+	else
+	  local targetdir="$(pwd)"
+	fi
+	cd $rootdir
+
+	echo "Zipping $targetdir/ingest-rice.zip..."
+	zip -r $targetdir/ingest-rice.zip org/kuali/coeus/rice-xml 1> /dev/null
+	echo "Zipping $targetdir/ingest-coeus-1-3.zip, dir 1..."
+	zip -r $targetdir/ingest-coeus-1-3.zip org/kuali/coeus/coeus-xml/1 1> /dev/null
+	echo "Zipping $targetdir/ingest-coeus-1-3.zip, dir 2..."
+	zip -r -u $targetdir/ingest-coeus-1-3.zip org/kuali/coeus/coeus-xml/2 1> /dev/null
+	echo "Zipping $targetdir/ingest-coeus-1-3.zip, dir 3..."
+	zip -r -u $targetdir/ingest-coeus-1-3.zip org/kuali/coeus/coeus-xml/3 1> /dev/null
+	echo "Zipping $targetdir/ingest-coeus-4.zip..."
+	zip -r $targetdir/ingest-coeus-4.zip org/kuali/coeus/coeus-xml/4 1> /dev/null
+
+	echo "When kc is running, navigate to: System Admin --> XML Ingester, and ingest these zip file in the order printed above."
+}
  
 initialize $@
 
 exec_sql_scripts
 
 check_sql_errors
+
+create_ingestion_zip_files
