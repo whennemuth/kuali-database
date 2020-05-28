@@ -35,6 +35,7 @@ initialize() {
 			exit 1;
 		fi
 		MYSQL_SQL_FILES_FOLDER="${WORKING_DIR}/${KC_REPO_DIR}/coeus-db/coeus-db-sql/src/main/resources/co/kuali/coeus/data/migration/sql/mysql"
+		INGESTION_XML_DIR="${WORKING_DIR}/${KC_REPO_DIR}/coeus-db/coeus-db-xml/src/main/resources"
 	else
 		echo "Missing kuali github repository url or existing directory!!!"
 		exit 1
@@ -257,7 +258,6 @@ function create_ingestion_zip_files() {
 		echo "Ingestion xml files not prepared because zip program is not installed."
 		return 1
 	fi
-	local rootdir="$(echo "${MYSQL_SQL_FILES_FOLDER}" | awk 'BEGIN { FS = "resources" } { print $1 }')resources"	
 	if [ -d /tmp ] ; then
 		local targetdir='/tmp'
 	elif [ -d "$WORKING_DIR" ] ; then
@@ -265,7 +265,7 @@ function create_ingestion_zip_files() {
 	else
 	  local targetdir="$(pwd)"
 	fi
-	cd $rootdir
+	cd $INGESTION_XML_DIR
 
 	echo "Zipping $targetdir/ingest-rice.zip..."
 	zip -r $targetdir/ingest-rice.zip org/kuali/coeus/rice-xml 1> /dev/null
