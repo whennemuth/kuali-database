@@ -54,16 +54,29 @@ The purpose is to create a mysql database for the kuali-research application to 
    ssh -i ~/.ssh/buaws-kuali-rsa-warren -N -v -L 3306:10.57.237.89:3306 ec2-user@10.57.237.89
    
    # 5) Test the database with a query (requires mysql client installed):
+   mkdir ingestion_xml && \
    mysql \
        -u root \
        -h 127.0.0.1 \
+       -v $(pwd)/ingestion_xml:/tmp
        --password=password123 \
        kualidb \
        -e "show tables;"
    ```
 
    *NOTE: Step number 2 above  has an optional second parameter - it will default to "master" if not provided, but it indicates the branch that will checked out from the cloned kuali-research git repository.*
-       
+
+   **Ingestion:**
+   You can at this point run the kc application against this database. However, you cannot create any workflows yet. this is because more database content needs to be "ingested".
+   If you mounted the /tmp directory of the container to one you create on the host, you will find 3 zip files in that directory:
+
+   1. ingest-rice.zip
+   2. ingest-coeus-1-3.zip
+   3. ingest-coeus-4.zip
+
+   Navigate to: System Admin --> XML Ingester, and ingest these zip files in the order listed above.
+
+      
 
 2. ### **Mysql-aurora in Amazon RDS**
 
@@ -200,5 +213,15 @@ The purpose is to create a mysql database for the kuali-research application to 
    
    
 
+   **Ingestion:**
+   You can at this point run the kc application against this database. However, you cannot create any workflows yet. this is because more database content needs to be "ingested".
+   If you mounted the /tmp directory of the container to one you create on the host, you will find 3 zip files in that directory:
    
+   1. ingest-rice.zip
+   2. ingest-coeus-1-3.zip
+   3. ingest-coeus-4.zip
+   
+   Navigate to: System Admin --> XML Ingester, and ingest these zip files in the order listed above.
+
+
 
