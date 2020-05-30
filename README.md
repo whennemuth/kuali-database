@@ -36,8 +36,8 @@ The purpose is to create a mysql database for the kuali-research application to 
 
    ```
    # 1) Acquire this repository:
-   git clone https://github.com/jefferyb/docker-mysql-kuali-coeus.git
-   cd docker-mysql-kuali-coeus
+   git clone https://github.com/bu-ist/kuali-database.git
+   cd kuali-database
    
    # 2) Build the mysql database image example:
    sh docker.sh build \
@@ -111,8 +111,8 @@ The purpose is to create a mysql database for the kuali-research application to 
    
    ```
    # 1) Acquire this repository if not already:
-   git clone https://github.com/jefferyb/docker-mysql-kuali-coeus.git
-   cd docker-mysql-kuali-coeus
+   git clone https://github.com/bu-ist/kuali-database.git
+   cd kuali-database
        
    # 2) Optional: If you have made changes to the yaml template, you can validate them.
    sh rds.sh validate
@@ -180,8 +180,8 @@ The purpose is to create a mysql database for the kuali-research application to 
    
    ```
     1) Acquire this repository if not already:
-   git clone https://github.com/jefferyb/docker-mysql-kuali-coeus.git
-   cd docker-mysql-kuali-coeus
+   git clone https://github.com/bu-ist/kuali-database.git
+   cd kuali-database
    
    # 2) Create and populate the kuali-research database in the rds cluster (EXAMPLE):
    sh rds.sh populate \
